@@ -79,3 +79,21 @@ def test_autovalutazione_maturita(client):
 def db_get(model, pk):
     from app.extensions import db
     return db.session.get(model, pk)
+
+
+def test_sistemi_14001_45001_sa8000(client):
+    from app.models import ComplianceObligation, MgmtEvent, MgmtRisk
+    _login(client)
+    for c in ("iso14001", "iso45001", "sa8000"):
+        for tab in ("rischi", "obblighi", "eventi", "autovalutazione"):
+            assert client.get(f"/sistemi/{c}?tab={tab}").status_code == 200
+    client.post("/sistemi/iso45001/rischio", data={"item": "Caduta dall'alto", "probability": "3", "severity": "4"})
+    r = MgmtRisk.query.filter_by(item="Caduta dall'alto").one()
+    from app.sistemi import livello_rischio, sintesi
+    assert livello_rischio(r.probability, r.severity) == (12, "alto")
+    client.post("/sistemi/iso14001/obbligo", data={"requirement": "Test scadenza", "due_date": "2000-01-01"})
+    assert sintesi("iso14001")["obblighi_critici"] >= 1
+    client.post("/sistemi/sa8000/evento", data={"kind": "Reclamo dei lavoratori", "description": "Prova"})
+    assert MgmtEvent.query.filter_by(description="Prova").one().status == "aperto"
+    assert client.get("/sistemi/iso9999").status_code == 404
+

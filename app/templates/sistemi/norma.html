@@ -1,0 +1,57 @@
+{% extends 'base.html' %}{% block title %}{{ n.sigla }} · {{ n.nome }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA DI GESTIONE · {{ n.sigla }}</p><h1>{{ n.icona }} {{ n.nome }}</h1><p class="muted">{{ n.intro }}</p></div>
+<nav class="iso-tabs">{% for c, x in NORME_SISTEMI.items() %}<a href="{{ url_for('sistemi.norma', codice=c) }}" class="{{ 'on' if c==codice }}">{{ x.sigla }} · {{ x.nome }}</a>{% endfor %}</nav>
+<section class="metrics iso-metrics">
+<div class="metric"><small>{{ n.registro }}</small><strong>{{ s.rischi }}</strong><span class="muted">di cui alti e aperti: {{ s.rischi_alti }}</span></div>
+<div class="metric"><small>Obblighi e requisiti</small><strong>{{ s.obblighi }}</strong><span class="{{ 'alert-text' if s.obblighi_critici else 'muted' }}">scaduti o in scadenza: {{ s.obblighi_critici }}</span></div>
+<div class="metric"><small>Eventi nell'anno</small><strong>{{ s.eventi_anno }}</strong><span class="muted">ancora aperti: {{ s.eventi_aperti }}</span></div>
+<div class="metric"><small>Autovalutazione</small><strong>{{ s.maturita if s.maturita is not none else '—' }}<small style="display:inline;font-size:15px;color:var(--muted)"> / 5</small></strong><span class="muted">{{ ('del ' ~ ultima.assessed_at.strftime('%d/%m/%Y')) if ultima else 'da fare' }}</span></div>
+</section>
+<nav class="iso-tabs sub">{% for t, l in [('rischi', n.registro), ('obblighi', 'Obblighi e scadenze'), ('eventi', 'Eventi'), ('autovalutazione', 'Autovalutazione per punto')] %}<a href="{{ url_for('sistemi.norma', codice=codice, tab=t) }}" class="{{ 'on' if tab==t }}">{{ l }}</a>{% endfor %}</nav>
+
+{% if tab == 'rischi' %}
+<section class="card"><h2>{{ n.registro }}</h2><p class="muted">Probabilità e gravità da 1 a 4: il prodotto dà la classe (basso &lt; 4 · medio 4-8 · alto ≥ 9).</p>
+<div class="table-wrap"><table class="reg"><tr><th>Attività</th><th>{{ n.voce }}</th><th>{{ n.effetto }}</th><th>Condizione</th><th>P</th><th>G</th><th>Livello</th><th>Misure</th><th>Stato</th><th></th></tr>
+{% for r in rischi %}{% set lv = livello_rischio(r.probability, r.severity) %}<tr><td hidden><form id="fr{{ r.id }}" method="post" action="{{ url_for('sistemi.salva_rischio', codice=codice) }}"></form></td><input form="fr{{ r.id }}" type="hidden" name="id" value="{{ r.id }}">
+<td><input form="fr{{ r.id }}" name="activity" value="{{ r.activity or '' }}"></td><td><input form="fr{{ r.id }}" name="item" value="{{ r.item }}"></td><td><input form="fr{{ r.id }}" name="effect" value="{{ r.effect or '' }}"></td>
+<td><select form="fr{{ r.id }}" name="condition">{% for c in n.condizioni %}<option {{ 'selected' if r.condition==c }}>{{ c }}</option>{% endfor %}</select></td>
+<td><select form="fr{{ r.id }}" name="probability">{% for k in range(1,5) %}<option {{ 'selected' if r.probability==k }}>{{ k }}</option>{% endfor %}</select></td>
+<td><select form="fr{{ r.id }}" name="severity">{% for k in range(1,5) %}<option {{ 'selected' if r.severity==k }}>{{ k }}</option>{% endfor %}</select></td>
+<td><span class="lv lv-{{ lv[1] }}">{{ lv[0] or '' }} {{ lv[1] }}</span></td>
+<td><input form="fr{{ r.id }}" name="controls" value="{{ r.controls or '' }}"><input form="fr{{ r.id }}" type="hidden" name="responsible" value="{{ r.responsible or '' }}"></td>
+<td><select form="fr{{ r.id }}" name="status">{% for st in ['aperto','sotto_controllo','chiuso'] %}<option value="{{ st }}" {{ 'selected' if r.status==st }}>{{ st|replace('_',' ') }}</option>{% endfor %}</select></td>
+<td class="nowrap"><button form="fr{{ r.id }}" class="btn small">Salva</button> <button form="fr{{ r.id }}" class="btn small danger" name="azione" value="elimina">✕</button></td></tr>{% endfor %}
+<tr class="nuovo"><td hidden><form id="fr-new" method="post" action="{{ url_for('sistemi.salva_rischio', codice=codice) }}"></form></td><td><input form="fr-new" name="activity" placeholder="Attività"></td><td><input form="fr-new" name="item" placeholder="{{ n.voce }} *" required></td><td><input form="fr-new" name="effect" placeholder="{{ n.effetto }}"></td>
+<td><select form="fr-new" name="condition">{% for c in n.condizioni %}<option>{{ c }}</option>{% endfor %}</select></td><td><select form="fr-new" name="probability">{% for k in range(1,5) %}<option>{{ k }}</option>{% endfor %}</select></td><td><select form="fr-new" name="severity">{% for k in range(1,5) %}<option>{{ k }}</option>{% endfor %}</select></td><td></td>
+<td><input form="fr-new" name="controls" placeholder="Misure"></td><td><select form="fr-new" name="status"><option value="aperto">aperto</option></select></td><td><button form="fr-new" class="btn small primary">Aggiungi</button></td></tr></table></div></section>
+
+{% elif tab == 'obblighi' %}
+<section class="card"><h2>Obblighi di conformità e requisiti</h2><p class="muted">Leggi, autorizzazioni, contratti e impegni volontari, con la scadenza: in rosso quelli scaduti, in arancio quelli entro 30 giorni.</p>
+<div class="table-wrap"><table class="reg"><tr><th>Fonte</th><th>Prescrizione</th><th>Scadenza</th><th>Responsabile</th><th>Evidenza</th><th>Stato</th><th></th></tr>
+{% for o in obblighi %}{% set st = stato_obbligo(o) %}<tr class="ob-{{ st }}"><td hidden><form id="fo{{ o.id }}" method="post" action="{{ url_for('sistemi.salva_obbligo', codice=codice) }}"></form></td><input form="fo{{ o.id }}" type="hidden" name="id" value="{{ o.id }}">
+<td><input form="fo{{ o.id }}" name="source" value="{{ o.source or '' }}"></td><td><input form="fo{{ o.id }}" name="requirement" value="{{ o.requirement }}"></td><td><input form="fo{{ o.id }}" type="date" name="due_date" value="{{ o.due_date.isoformat() if o.due_date }}"></td>
+<td><input form="fo{{ o.id }}" name="responsible" value="{{ o.responsible or '' }}"></td><td><input form="fo{{ o.id }}" name="evidence" value="{{ o.evidence or '' }}"></td>
+<td><select form="fo{{ o.id }}" name="status">{% for k, v in STATI_OBBLIGO.items() if k != 'in_scadenza' %}<option value="{{ k }}" {{ 'selected' if o.status==k }}>{{ v }}</option>{% endfor %}</select><small class="stato-calc">{{ STATI_OBBLIGO[st] }}</small></td>
+<td class="nowrap"><button form="fo{{ o.id }}" class="btn small">Salva</button> <button form="fo{{ o.id }}" class="btn small danger" name="azione" value="elimina">✕</button></td></tr>{% endfor %}
+<tr class="nuovo"><td hidden><form id="fo-new" method="post" action="{{ url_for('sistemi.salva_obbligo', codice=codice) }}"></form></td><td><input form="fo-new" name="source" placeholder="Norma o documento"></td><td><input form="fo-new" name="requirement" placeholder="Prescrizione *" required></td><td><input form="fo-new" type="date" name="due_date"></td><td><input form="fo-new" name="responsible" placeholder="Responsabile"></td><td><input form="fo-new" name="evidence" placeholder="Evidenza"></td><td><select form="fo-new" name="status"><option value="da_verificare">Da verificare</option><option value="conforme">Conforme</option></select></td><td><button form="fo-new" class="btn small primary">Aggiungi</button></td></tr></table></div></section>
+
+{% elif tab == 'eventi' %}
+<section class="card"><h2>Registra un evento</h2><form method="post" action="{{ url_for('sistemi.salva_evento', codice=codice) }}" class="form-grid">
+<select name="kind">{% for k in n.eventi %}<option>{{ k }}</option>{% endfor %}</select><input type="date" name="event_date" value="{{ '' }}">
+<textarea name="description" rows="2" placeholder="Che cosa è successo *" required class="span2"></textarea>
+<input name="cause" placeholder="Causa"><input name="action" placeholder="Azione decisa">
+{% if codice == 'iso45001' %}<input name="lost_days" type="number" min="0" placeholder="Giorni di assenza">{% endif %}
+<button class="btn primary span2">Registra</button></form></section>
+<section class="card document-list">{% for e in eventi %}<div class="document-row"><div><span class="badge {{ 'completato' if e.status=='chiuso' else 'da_compilare' }}">{{ e.status|upper }}</span> <b>{{ e.kind }}</b> · {{ e.event_date.strftime('%d/%m/%Y') }}{% if e.lost_days %} · {{ e.lost_days }} giorni di assenza{% endif %}<p>{{ e.description }}</p>{% if e.cause or e.action %}<small>Causa: {{ e.cause or '—' }} · Azione: {{ e.action or '—' }}</small>{% endif %}</div>
+{% if e.status == 'aperto' %}<form method="post" action="{{ url_for('sistemi.salva_evento', codice=codice) }}"><input type="hidden" name="id" value="{{ e.id }}"><input type="hidden" name="kind" value="{{ e.kind }}"><input type="hidden" name="event_date" value="{{ e.event_date.isoformat() }}"><input type="hidden" name="description" value="{{ e.description }}"><input type="hidden" name="cause" value="{{ e.cause or '' }}"><input type="hidden" name="action" value="{{ e.action or '' }}"><input type="hidden" name="lost_days" value="{{ e.lost_days if e.lost_days is not none else '' }}"><button class="btn small" name="status" value="chiuso">Chiudi</button></form>{% endif %}</div>{% else %}<p class="empty">Nessun evento registrato.</p>{% endfor %}</section>
+
+{% else %}
+<section class="card"><h2>Autovalutazione per punto della norma</h2><p class="muted">Livelli: {% for k, l in LIVELLI.items() %}<b>{{ k }}</b> {{ l }}{{ ' · ' if not loop.last }}{% endfor %}. Serve da pre-audit: i punti sotto 3 sono le priorità.</p>
+<form method="post" action="{{ url_for('sistemi.salva_autovalutazione', codice=codice) }}"><table class="maturity"><tbody>
+{% for cap, nome, punti in n.punti %}<tr class="cap"><th colspan="3">{{ cap }} · {{ nome }}</th></tr>
+{% for cod, tit in punti %}{% set v = ultima.scores.get(cod) if ultima else none %}<tr class="{{ 'debole' if v is not none and v < 3 }}"><td><b>{{ cod }}</b> {{ tit }}</td>
+<td class="voti">{% for k in range(0,6) %}<label><input type="radio" name="s_{{ cod }}" value="{{ k }}" {{ 'checked' if v == k }}><span>{{ k }}</span></label>{% endfor %}</td>
+<td><input name="n_{{ cod }}" value="{{ ultima.notes.get(cod, '') if ultima else '' }}" placeholder="Evidenze / note"></td></tr>{% endfor %}{% endfor %}
+</tbody></table><div class="form-grid" style="margin-top:14px"><input name="assessor" placeholder="Chi valuta"><button class="btn primary">Salva l'autovalutazione</button></div></form></section>
+{% endif %}
+{% endblock %}

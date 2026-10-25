@@ -1,5 +1,5 @@
-"""MASTER ISO SUITE — sistema qualità ISO 9001, gestione dell'innovazione ISO 56000
-e rendicontazione di sostenibilità VSME, per PMI manifatturiere.
+"""MASTER ISO SUITE — qualità ISO 9001, innovazione ISO 56000, ambiente ISO 14001,
+salute e sicurezza ISO 45001, responsabilità sociale SA8000 e sostenibilità VSME, per PMI manifatturiere.
 
 Applicazione dimostrativa e didattica: i dati di partenza sono di un'azienda
 simulata (ACME Saldature Srl). Con DEMO_DATA=0 parte vuota per l'uso reale.
@@ -30,9 +30,10 @@ def create_app(config=Config):
     from .quality_objectives import quality_objectives_bp
     from .risorse import risorse_bp
     from .sgq import sgq_bp
+    from .sistemi import sistemi_bp
     from .vsme import vsme_bp
     from .vsme_report import vsme_report_bp
-    for bp in (auth_bp, documents_bp, innovazione_bp, quality_objectives_bp, risorse_bp, sgq_bp, vsme_bp, vsme_report_bp):
+    for bp in (auth_bp, documents_bp, innovazione_bp, quality_objectives_bp, risorse_bp, sgq_bp, sistemi_bp, vsme_bp, vsme_report_bp):
         app.register_blueprint(bp)
 
     @app.context_processor
@@ -63,7 +64,9 @@ def create_app(config=Config):
             "rischi_aperti": QualityRisk.query.filter_by(status="aperto").count(),
             "anno": oggi.year,
         }
-        return render_template("launchpad.html", n=numeri, k=indicatori(oggi.year))
+        from .sistemi import sintesi
+        return render_template("launchpad.html", n=numeri, k=indicatori(oggi.year),
+                               sist={c: sintesi(c) for c in ("iso14001", "iso45001", "sa8000")})
 
     with app.app_context():
         db.create_all()

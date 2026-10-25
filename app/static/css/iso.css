@@ -1,5 +1,5 @@
 header .azienda{color:#9fc3d9;font-weight:700;font-size:13px}
-nav.subnav{grid-template-columns:repeat(7,1fr)}
+nav.subnav{grid-template-columns:repeat(8,1fr)}
 .iso-metrics{grid-template-columns:repeat(5,1fr)}
 .iso-metrics .metric span{display:block;font-size:12px}
 @media(max-width:900px){.iso-metrics{grid-template-columns:repeat(2,1fr)}}
@@ -40,3 +40,17 @@ table.maturity td.voti span{display:inline-grid;place-items:center;width:28px;he
 table.maturity td.voti input:checked+span{background:var(--navy);color:#fff;border-color:var(--navy)}
 table.maturity td input[type=text],table.maturity td input:not([type]){width:100%}
 .iso-foot{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+.iso-tabs.sub a{border-radius:6px}
+table.reg{font-size:13px}
+table.reg th{text-align:left;padding:6px;background:#eef3f7;font-size:12px}
+table.reg td{padding:4px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.reg input,table.reg select{width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:5px}
+table.reg tr.nuovo td{background:#f7fafc}
+.lv{display:inline-block;padding:3px 8px;border-radius:12px;font-weight:800;font-size:12px;white-space:nowrap}
+.lv-alto{background:#fde3e5;color:var(--red)}.lv-medio{background:#fff1d6;color:#9a6200}.lv-basso{background:#d6f3e6;color:var(--green)}
+tr.ob-non_conforme td:first-child{border-left:4px solid var(--red)}tr.ob-in_scadenza td:first-child{border-left:4px solid var(--orange)}
+.stato-calc{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.nowrap{white-space:nowrap}
+table.maturity tr.debole td:first-child{border-left:4px solid var(--orange)}
+table.reg select[name=probability],table.reg select[name=severity]{min-width:52px}
+table.reg td hidden{display:none}

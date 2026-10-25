@@ -287,3 +287,59 @@ def carica_demo():
 
     from .vsme import seed_vsme_indicators
     seed_vsme_indicators(anno)
+    carica_demo_sistemi(oggi)
+
+
+def carica_demo_sistemi(oggi):
+    """ISO 14001, ISO 45001 e SA8000: una prima base da completare con il materiale vero."""
+    from .models import ComplianceObligation, MgmtAssessment, MgmtEvent, MgmtRisk
+    d = lambda giorni: oggi + timedelta(days=giorni)  # noqa: E731
+    R = lambda std, att, voce, eff, cond, p, g, mis, st="aperto": MgmtRisk(  # noqa: E731
+        standard=std, activity=att, item=voce, effect=eff, condition=cond, probability=p, severity=g, controls=mis, status=st)
+    O = lambda std, fonte, req, gg, resp, ev, st: ComplianceObligation(  # noqa: E731
+        standard=std, source=fonte, requirement=req, due_date=d(gg) if gg is not None else None, responsible=resp, evidence=ev, status=st)
+    db.session.add_all([
+        # ISO 14001 · aspetti ambientali
+        R("iso14001", "Saldatura robot e manuale", "Emissione di fumi di saldatura", "Qualità dell'aria", "Normale", 3, 2, "Aspiratori localizzati con filtri, manutenzione semestrale", "sotto_controllo"),
+        R("iso14001", "Taglio laser", "Consumo di energia elettrica", "Consumo di risorse, emissioni indirette CO2", "Normale", 4, 2, "Monitoraggio mensile kWh/pezzo, spegnimento in pausa"),
+        R("iso14001", "Lavorazioni lamiera", "Rottami e sfridi metallici", "Rifiuti (recuperabili)", "Normale", 4, 1, "Raccolta differenziata e vendita a recuperatore autorizzato", "sotto_controllo"),
+        R("iso14001", "Manutenzione", "Oli esausti ed emulsioni", "Rifiuti pericolosi, contaminazione del suolo", "Anomala", 2, 3, "Deposito su bacino di contenimento, smaltitore autorizzato"),
+        R("iso14001", "Magazzino gas tecnici", "Perdita da bombole", "Rilascio in atmosfera, incendio", "Emergenza", 1, 4, "Gabbia ventilata, piano di emergenza, prova annuale"),
+        O("iso14001", "Autorizzazione unica ambientale (AUA)", "Rinnovo dell'autorizzazione alle emissioni in atmosfera", 400, "Direzione", "AUA protocollo demo", "conforme"),
+        O("iso14001", "D.Lgs. 152/06 – rifiuti", "Tenuta del registro di carico e scarico e dei formulari", None, "Amministrazione", "Registro aggiornato", "conforme"),
+        O("iso14001", "AUA – prescrizioni", "Analisi annuale delle emissioni dei punti E1-E3", 20, "Responsabile qualità", "Laboratorio esterno da incaricare", "da_verificare"),
+        O("iso14001", "Prevenzione incendi", "Rinnovo periodico conformità antincendio", -10, "RSPP", "Pratica da presentare", "da_verificare"),
+        MgmtEvent(standard="iso14001", kind="Sversamento", event_date=d(-40), description="Perdita di olio idraulico dalla pressa piegatrice (circa 2 litri).",
+                  cause="Raccordo usurato", action="Assorbimento con kit, sostituzione raccordo, controllo raccordi nel piano di manutenzione", status="chiuso"),
+        # ISO 45001 · pericoli e rischi
+        R("iso45001", "Saldatura", "Radiazioni ottiche artificiali (arco)", "Lesioni a occhi e pelle", "Ordinaria", 2, 3, "Schermi, maschere autoscuranti, formazione", "sotto_controllo"),
+        R("iso45001", "Saldatura", "Fumi di saldatura (cancerogeni)", "Malattie respiratorie", "Ordinaria", 3, 4, "Aspirazione localizzata, sorveglianza sanitaria, misure di esposizione"),
+        R("iso45001", "Piegatura", "Schiacciamento mani nella pressa", "Lesioni gravi alle mani", "Ordinaria", 2, 4, "Barriere fotoelettriche, verifica giornaliera, addestramento"),
+        R("iso45001", "Movimentazione", "Investimento da carrello elevatore", "Traumi", "Ordinaria", 2, 4, "Percorsi segnalati, abilitazione carrellisti, specchi"),
+        R("iso45001", "Celle robot", "Accesso alla cella in movimento", "Urto con il robot", "Straordinaria", 1, 4, "Interblocchi porte, procedura LOTO", "sotto_controllo"),
+        R("iso45001", "Reparto", "Rumore", "Ipoacusia", "Ordinaria", 3, 2, "Otoprotettori, misure fonometriche"),
+        O("iso45001", "D.Lgs. 81/08 art. 28", "Aggiornamento del Documento di valutazione dei rischi (DVR)", 60, "RSPP", "DVR rev. demo", "conforme"),
+        O("iso45001", "D.Lgs. 81/08 art. 37", "Aggiornamento quinquennale della formazione dei lavoratori", 25, "RSPP", "3 lavoratori in scadenza", "da_verificare"),
+        O("iso45001", "D.Lgs. 81/08 art. 71", "Verifiche periodiche delle attrezzature di sollevamento", -5, "Manutenzione", "Carroponte: verifica da prenotare", "da_verificare"),
+        O("iso45001", "D.Lgs. 81/08 art. 41", "Sorveglianza sanitaria secondo il protocollo del medico competente", 120, "Direzione", "Calendario visite", "conforme"),
+        MgmtEvent(standard="iso45001", kind="Infortunio", event_date=d(-75), description="Taglio alla mano durante la sbavatura di un pezzo.",
+                  cause="Guanto non adatto al rischio di taglio", action="Guanti antitaglio livello D e formazione sui DPI", lost_days=4, status="chiuso"),
+        MgmtEvent(standard="iso45001", kind="Quasi infortunio", event_date=d(-12), description="Pallet caduto dalla scaffalatura durante il prelievo, nessun ferito.",
+                  cause="Pallet danneggiato", action="Controllo dei pallet in ingresso", status="aperto"),
+        # SA8000 · rischi sociali
+        R("sa8000", "Picchi di produzione", "Straordinari oltre i limiti contrattuali", "Orario di lavoro (req. 7)", "Interno", 3, 3, "Pianificazione a capacità finita, monitoraggio settimanale delle ore"),
+        R("sa8000", "Fornitore di lavorazioni in conto terzi", "Condizioni di lavoro non verificate", "Fornitori (req. 9.10)", "Fornitori", 2, 3, "Questionario sociale e visita annuale"),
+        R("sa8000", "Personale con lingue diverse", "Comprensione insufficiente di regole e diritti", "Discriminazione (req. 5)", "Interno", 2, 2, "Regolamento tradotto, mediatore in assunzione", "sotto_controllo"),
+        R("sa8000", "Agenzie per il lavoro", "Costi di reclutamento a carico dei lavoratori", "Lavoro forzato (req. 2)", "Appalti", 1, 4, "Clausola contrattuale e verifica a campione"),
+        O("sa8000", "SA8000 – requisito 9.2", "Nomina e riunione trimestrale del Social Performance Team", 15, "Direzione", "Verbale ultimo trimestre", "conforme"),
+        O("sa8000", "SA8000 – requisito 8", "Verifica che le retribuzioni coprano il salario dignitoso", 90, "Amministrazione", "Analisi da aggiornare", "da_verificare"),
+        O("sa8000", "CCNL Metalmeccanici", "Rispetto di minimi retributivi e orari contrattuali", None, "Amministrazione", "Buste paga e presenze", "conforme"),
+        MgmtEvent(standard="sa8000", kind="Segnalazione anonima", event_date=d(-20), description="Segnalazione nella cassetta: turni del sabato comunicati con poco preavviso.",
+                  action="Calendario dei sabati pubblicato con 4 settimane di anticipo", status="aperto"),
+    ])
+    voti = {"iso14001": {"4.1": 2, "4.2": 2, "5.2": 1, "6.1.2": 3, "6.1.3": 3, "6.2": 1, "8.1": 2, "8.2": 3, "9.1.2": 2, "10.2": 3},
+            "iso45001": {"4.2": 3, "5.2": 2, "5.4": 3, "6.1.2": 4, "6.1.3": 4, "8.1.2": 3, "8.1.4": 2, "8.2": 3, "9.1.2": 3, "10.2": 3},
+            "sa8000": {"1": 5, "2": 4, "3": 4, "4": 3, "5": 3, "6": 4, "7": 2, "8": 3, "9.1": 2, "9.2": 3, "9.6": 2, "9.10": 1}}
+    for std, v in voti.items():
+        db.session.add(MgmtAssessment(standard=std, assessed_at=d(-30), assessor="Consulente", scores=v, notes={}))
+    db.session.commit()

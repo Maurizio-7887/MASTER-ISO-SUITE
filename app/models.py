@@ -679,3 +679,61 @@ class InnovationMaturity(db.Model):
     scores = db.Column(db.JSON, nullable=False, default=dict)  # {"4.1": 3, ...}
     notes = db.Column(db.JSON, nullable=False, default=dict)
     summary = db.Column(db.Text, nullable=True)
+
+
+# ============================================ ISO 14001 · ISO 45001 · SA8000 ==
+class MgmtRisk(db.Model):
+    """Aspetto ambientale (14001), pericolo (45001) o rischio sociale (SA8000), valutato P × G (1-4)."""
+    __tablename__ = "mgmt_risk"
+    id = db.Column(db.Integer, primary_key=True)
+    standard = db.Column(db.String(20), nullable=False, index=True)  # iso14001 / iso45001 / sa8000
+    activity = db.Column(db.String(200), nullable=True)   # attività, reparto o fornitore
+    item = db.Column(db.String(250), nullable=False)      # aspetto / pericolo / rischio
+    effect = db.Column(db.String(250), nullable=True)     # impatto / danno / persone coinvolte
+    condition = db.Column(db.String(40), nullable=True)
+    probability = db.Column(db.Integer, nullable=True)
+    severity = db.Column(db.Integer, nullable=True)
+    controls = db.Column(db.Text, nullable=True)          # misure in atto e da attuare
+    responsible = db.Column(db.String(150), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="aperto")  # aperto / sotto_controllo / chiuso
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ComplianceObligation(db.Model):
+    """Obbligo di conformità o requisito legale con scadenza (14001 §6.1.3, 45001 §6.1.3, SA8000)."""
+    __tablename__ = "compliance_obligation"
+    id = db.Column(db.Integer, primary_key=True)
+    standard = db.Column(db.String(20), nullable=False, index=True)
+    source = db.Column(db.String(200), nullable=True)      # norma, autorizzazione, contratto
+    requirement = db.Column(db.Text, nullable=False)
+    due_date = db.Column(db.Date, nullable=True)
+    responsible = db.Column(db.String(150), nullable=True)
+    evidence = db.Column(db.String(300), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="da_verificare")
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class MgmtEvent(db.Model):
+    """Evento da registrare: infortunio, quasi infortunio, emergenza ambientale, reclamo o segnalazione sociale."""
+    __tablename__ = "mgmt_event"
+    id = db.Column(db.Integer, primary_key=True)
+    standard = db.Column(db.String(20), nullable=False, index=True)
+    kind = db.Column(db.String(60), nullable=True)
+    event_date = db.Column(db.Date, nullable=False, default=date.today)
+    description = db.Column(db.Text, nullable=False)
+    cause = db.Column(db.Text, nullable=True)
+    action = db.Column(db.Text, nullable=True)
+    lost_days = db.Column(db.Integer, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="aperto")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+class MgmtAssessment(db.Model):
+    """Autovalutazione per punto della norma (0-5)."""
+    __tablename__ = "mgmt_assessment"
+    id = db.Column(db.Integer, primary_key=True)
+    standard = db.Column(db.String(20), nullable=False, index=True)
+    assessed_at = db.Column(db.Date, nullable=False, default=date.today)
+    assessor = db.Column(db.String(150), nullable=True)
+    scores = db.Column(db.JSON, nullable=False, default=dict)
+    notes = db.Column(db.JSON, nullable=False, default=dict)

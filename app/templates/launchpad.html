@@ -1,5 +1,5 @@
 {% extends 'base.html' %}{% block title %}Cruscotto{% endblock %}{% block content %}
-<div class="intro"><p class="eyebrow">SISTEMI DI GESTIONE · ISO 9001 · ISO 56001 · VSME</p><h1>{{ RAGIONE_SOCIALE }}</h1><p class="muted">Ogni modulo è collegato al punto della norma che soddisfa: lo trovi accanto al nome.</p></div>
+<div class="intro"><p class="eyebrow">SISTEMI DI GESTIONE · ISO 9001 · ISO 56001 · ISO 14001 · ISO 45001 · SA8000 · VSME</p><h1>{{ RAGIONE_SOCIALE }}</h1><p class="muted">Ogni modulo è collegato al punto della norma che soddisfa: lo trovi accanto al nome.</p></div>
 <section class="metrics iso-metrics">
 <div class="metric"><small>Non conformità aperte</small><strong class="{{ 'alert-text' if n.nc_aperte }}">{{ n.nc_aperte }}</strong></div>
 <div class="metric"><small>Audit ancora da svolgere</small><strong>{{ n.audit_da_fare }}</strong></div>
@@ -28,6 +28,10 @@
 <a class="launchpad-tile" href="{{ url_for('innovazione.idee') }}"><span class="launchpad-tile-icon">💡</span>Idee e opportunità<small>§8.3.2</small></a>
 <a class="launchpad-tile" href="{{ url_for('innovazione.progetti') }}"><span class="launchpad-tile-icon">🚀</span>Portafoglio progetti<small>§8.3 fasi e gate</small></a>
 <a class="launchpad-tile" href="{{ url_for('innovazione.maturita') }}"><span class="launchpad-tile-icon">🧪</span>Maturità del sistema<small>§9.2 · §10</small></a></div></section>
+<section class="launchpad-group launchpad-gray"><h2>🌍 Ambiente, sicurezza, responsabilità sociale</h2><div class="launchpad-tiles">
+<a class="launchpad-tile" href="{{ url_for('sistemi.norma', codice='iso14001') }}"><span class="launchpad-tile-icon">🌿</span>ISO 14001 · Ambiente<small>aspetti {{ sist.iso14001.rischi }} · obblighi critici {{ sist.iso14001.obblighi_critici }}</small></a>
+<a class="launchpad-tile" href="{{ url_for('sistemi.norma', codice='iso45001') }}"><span class="launchpad-tile-icon">🦺</span>ISO 45001 · Salute e sicurezza<small>rischi alti {{ sist.iso45001.rischi_alti }} · eventi aperti {{ sist.iso45001.eventi_aperti }}</small></a>
+<a class="launchpad-tile" href="{{ url_for('sistemi.norma', codice='sa8000') }}"><span class="launchpad-tile-icon">🤝</span>SA8000 · Responsabilità sociale<small>segnalazioni aperte {{ sist.sa8000.eventi_aperti }}</small></a></div></section>
 <section class="launchpad-group launchpad-purple"><h2>🌱 Sostenibilità · VSME</h2><div class="launchpad-tiles">
 <a class="launchpad-tile" href="{{ url_for('vsme.index') }}"><span class="launchpad-tile-icon">🌱</span>Registro indicatori VSME<small>Modulo base, narrativo, partner</small></a>
 <a class="launchpad-tile" href="{{ url_for('vsme_report.allegato', anno=n.anno) }}"><span class="launchpad-tile-icon">📄</span>Relazione di sostenibilità<small>allegato al bilancio</small></a></div></section>
