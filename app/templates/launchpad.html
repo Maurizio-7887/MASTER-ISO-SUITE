@@ -1,0 +1,34 @@
+{% extends 'base.html' %}{% block title %}Cruscotto{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMI DI GESTIONE · ISO 9001 · ISO 56001 · VSME</p><h1>{{ RAGIONE_SOCIALE }}</h1><p class="muted">Ogni modulo è collegato al punto della norma che soddisfa: lo trovi accanto al nome.</p></div>
+<section class="metrics iso-metrics">
+<div class="metric"><small>Non conformità aperte</small><strong class="{{ 'alert-text' if n.nc_aperte }}">{{ n.nc_aperte }}</strong></div>
+<div class="metric"><small>Audit ancora da svolgere</small><strong>{{ n.audit_da_fare }}</strong></div>
+<div class="metric"><small>Tarature scadute</small><strong class="{{ 'alert-text' if n.tarature_scadute }}">{{ n.tarature_scadute }}</strong></div>
+<div class="metric"><small>Rischi aperti</small><strong>{{ n.rischi_aperti }}</strong></div>
+<div class="metric"><small>Progetti di innovazione attivi</small><strong>{{ k.progetti_attivi }}</strong></div>
+</section>
+<div class="launchpad">
+<section class="launchpad-group launchpad-blue"><h2>🧭 Contesto, leadership e pianificazione</h2><div class="launchpad-tiles">
+<a class="launchpad-tile" href="{{ url_for('quality_objectives.index') }}"><span class="launchpad-tile-icon">🎯</span>Obiettivi, rischi e opportunità<small>§6.1 · §6.2</small></a>
+<a class="launchpad-tile" href="{{ url_for('documents.index') }}"><span class="launchpad-tile-icon">📚</span>Manuale, procedure e moduli<small>§7.5 informazioni documentate</small></a>
+<a class="launchpad-tile" href="{{ url_for('risorse.elenco') }}"><span class="launchpad-tile-icon">👥</span>Persone e accessi<small>§5.3 ruoli</small></a></div></section>
+<section class="launchpad-group launchpad-coral"><h2>🛠️ Supporto: persone, macchine, strumenti</h2><div class="launchpad-tiles">
+<a class="launchpad-tile" href="{{ url_for('sgq.formazione') }}"><span class="launchpad-tile-icon">🎓</span>Formazione e qualifiche<small>§7.2 competenza</small></a>
+<a class="launchpad-tile" href="{{ url_for('sgq.polivalenza_elenco') }}"><span class="launchpad-tile-icon">🧩</span>Matrice di polivalenza<small>§7.1.2 · §7.2</small></a>
+<a class="launchpad-tile" href="{{ url_for('sgq.manutenzione') }}"><span class="launchpad-tile-icon">⚙️</span>Manutenzione<small>§7.1.3 infrastrutture</small></a>
+<a class="launchpad-tile" href="{{ url_for('sgq.tarature') }}"><span class="launchpad-tile-icon">📏</span>Tarature<small>§7.1.5 strumenti di misura</small></a></div></section>
+<section class="launchpad-group launchpad-green"><h2>✅ Valutazione e miglioramento</h2><div class="launchpad-tiles">
+<a class="launchpad-tile" href="{{ url_for('sgq.non_conformita') }}"><span class="launchpad-tile-icon">⚠️</span>Non conformità 8D<small>§8.7 · §10.2</small></a>
+<a class="launchpad-tile" href="{{ url_for('sgq.audit') }}"><span class="launchpad-tile-icon">🔍</span>Audit interni<small>§9.2</small></a>
+<a class="launchpad-tile" href="{{ url_for('sgq.riesame_direzione') }}"><span class="launchpad-tile-icon">📋</span>Riesame della direzione<small>§9.3</small></a>
+<a class="launchpad-tile" href="{{ url_for('sgq.index') }}"><span class="launchpad-tile-icon">🔄</span>Sintesi del sistema qualità<small>§9 · §10</small></a></div></section>
+<section class="launchpad-group launchpad-amber"><h2>💡 Innovazione · ISO 56001 / 56002</h2><div class="launchpad-tiles">
+<a class="launchpad-tile" href="{{ url_for('innovazione.index') }}"><span class="launchpad-tile-icon">📈</span>Cruscotto innovazione<small>§9.1 indicatori</small></a>
+<a class="launchpad-tile" href="{{ url_for('innovazione.strategia') }}"><span class="launchpad-tile-icon">🧭</span>Strategia e politica<small>§5.2 · §6.2</small></a>
+<a class="launchpad-tile" href="{{ url_for('innovazione.idee') }}"><span class="launchpad-tile-icon">💡</span>Idee e opportunità<small>§8.3.2</small></a>
+<a class="launchpad-tile" href="{{ url_for('innovazione.progetti') }}"><span class="launchpad-tile-icon">🚀</span>Portafoglio progetti<small>§8.3 fasi e gate</small></a>
+<a class="launchpad-tile" href="{{ url_for('innovazione.maturita') }}"><span class="launchpad-tile-icon">🧪</span>Maturità del sistema<small>§9.2 · §10</small></a></div></section>
+<section class="launchpad-group launchpad-purple"><h2>🌱 Sostenibilità · VSME</h2><div class="launchpad-tiles">
+<a class="launchpad-tile" href="{{ url_for('vsme.index') }}"><span class="launchpad-tile-icon">🌱</span>Registro indicatori VSME<small>Modulo base, narrativo, partner</small></a>
+<a class="launchpad-tile" href="{{ url_for('vsme_report.allegato', anno=n.anno) }}"><span class="launchpad-tile-icon">📄</span>Relazione di sostenibilità<small>allegato al bilancio</small></a></div></section>
+</div>{% endblock %}

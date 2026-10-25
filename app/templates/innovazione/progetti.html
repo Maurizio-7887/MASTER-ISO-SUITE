@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Portafoglio progetti di innovazione{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">ISO 56002 · §8.3 PROCESSI DI INNOVAZIONE</p><h1>Portafoglio progetti</h1><p class="muted">Ogni progetto attraversa le fasi del processo di innovazione; a ogni gate la direzione decide se andare avanti, attendere, ripetere o fermarsi.</p></div>
+{% include 'innovazione/_nav.html' %}
+<section class="card"><form method="post" action="{{ url_for('innovazione.nuovo_progetto') }}" class="inline-form">
+<input name="title" placeholder="Nuovo progetto di innovazione" required style="min-width:280px">
+<select name="kind">{% for t in TIPI %}<option value="{{ t }}">{{ t|capitalize }}</option>{% endfor %}</select>
+<select name="horizon">{% for k, v in ORIZZONTI.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+<select name="technology"><option value="">Tecnologia</option>{% for t in TECNOLOGIE %}<option>{{ t }}</option>{% endfor %}</select>
+<button class="btn primary">Crea</button></form></section>
+<div class="kanban">{% for f, elenco in colonne.items() %}<section class="kan-col"><h3><span>{{ f }}</span> {{ FASI_INNOVAZIONE[f][0] }} <em>{{ elenco|length }}</em></h3>
+{% for p in elenco %}<a class="kan-card {{ 'sospeso' if p.status=='sospeso' }} oriz-{{ p.horizon }}" href="{{ url_for('innovazione.progetto', project_id=p.id) }}"><small>{{ p.code }} · {{ ORIZZONTI[p.horizon] }}</small><b>{{ p.title }}</b>
+<span>{{ p.technology or p.kind }}{% if p.budget %} · € {{ '{:,.0f}'.format(p.budget).replace(',', '.') }}{% endif %}{% if p.status=='sospeso' %} · <i>in attesa</i>{% endif %}</span></a>
+{% else %}<p class="empty">—</p>{% endfor %}</section>{% endfor %}</div>
+<section class="card document-list" style="margin-top:18px"><h2>Progetti chiusi</h2>
+{% for p in chiusi %}<div class="document-row"><div><span class="badge {{ 'completato' if p.status=='chiuso_successo' else 'da_compilare' }}">{{ 'SUCCESSO' if p.status=='chiuso_successo' else 'FERMATO' }}</span> <b>{{ p.code }}</b> — {{ p.title }}<p>{{ p.lessons or '' }}</p></div><a class="btn small" href="{{ url_for('innovazione.progetto', project_id=p.id) }}">Apri</a></div>{% else %}<p class="empty">Nessun progetto chiuso.</p>{% endfor %}</section>
+{% endblock %}

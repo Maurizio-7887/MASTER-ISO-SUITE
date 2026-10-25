@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% block title %}Idee e opportunità{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">ISO 56002 · §8.3.2 IDENTIFICARE LE OPPORTUNITÀ</p><h1>Idee e opportunità</h1><p class="muted">Chiunque in azienda può proporre un'idea. La direzione la valuta su valore, fattibilità, coerenza con la strategia e rischio: la priorità si calcola da sola.</p></div>
+{% if current_user.is_owner %}{% include 'innovazione/_nav.html' %}{% endif %}
+<section class="card"><h2>💡 Proponi un'idea</h2><form method="post" action="{{ url_for('innovazione.nuova_idea') }}" class="form-grid">
+<input name="title" placeholder="Titolo dell'idea *" required class="span2">
+<textarea name="description" rows="2" placeholder="Che problema risolve, che vantaggio porta" class="span2"></textarea>
+<input name="proposer" placeholder="Chi propone (vuoto = tu)">
+<input name="area" placeholder="Reparto o processo">
+<select name="source">{% for k, v in FONTI.items() %}<option value="{{ k }}">Fonte: {{ v }}</option>{% endfor %}</select>
+<select name="kind">{% for t in TIPI %}<option value="{{ t }}">Innovazione di {{ t }}</option>{% endfor %}</select>
+<select name="technology" class="span2"><option value="">Tecnologia coinvolta (facoltativo)</option>{% for t in TECNOLOGIE %}<option>{{ t }}</option>{% endfor %}</select>
+<button class="btn primary span2">Registra l'idea</button></form></section>
+<section class="card"><form method="get" class="search-row"><select name="stato" onchange="this.form.submit()"><option value="">Tutte le idee</option>{% for s in ['proposta','in_valutazione','approvata','scartata','progetto'] %}<option value="{{ s }}" {{ 'selected' if stato==s }}>{{ s|replace('_',' ')|capitalize }}</option>{% endfor %}</select></form></section>
+<section class="card document-list">
+{% for i in idee %}<div class="document-row idea-row"><div>
+<span class="badge st-{{ i.status }}">{{ i.status|replace('_',' ')|upper }}</span> <b>{{ i.code }}</b> — <b>{{ i.title }}</b>
+<small> · {{ i.proposer or '—' }} · {{ FONTI.get(i.source, i.source) }} · {{ i.kind }}{% if i.technology %} · {{ i.technology }}{% endif %} · {{ i.submitted_at.strftime('%d/%m/%Y') }}</small>
+<p>{{ i.description or '' }}</p>
+{% if current_user.is_owner %}<details><summary>Valuta{% if i.priority %} · priorità <b>{{ i.priority }}</b>/5{% endif %}</summary>
+<form method="post" action="{{ url_for('innovazione.valuta_idea', idea_id=i.id) }}" class="inline-form score-form">
+{% for campo, lab in [('score_value','Valore'),('score_feasibility','Fattibilità'),('score_fit','Coerenza strategica'),('score_risk','Rischio (5 = basso)')] %}<label>{{ lab }}<select name="{{ campo }}"><option value="">—</option>{% for n in range(1,6) %}<option {{ 'selected' if i[campo]==n }}>{{ n }}</option>{% endfor %}</select></label>{% endfor %}
+<label>Stato<select name="status">{% for s in ['proposta','in_valutazione','approvata','scartata'] %}<option value="{{ s }}" {{ 'selected' if i.status==s }}>{{ s|replace('_',' ') }}</option>{% endfor %}</select></label>
+<input name="evaluation_notes" value="{{ i.evaluation_notes or '' }}" placeholder="Motivazione" style="min-width:260px">
+<button class="btn">Salva</button></form>
+{% if i.status in ('approvata','in_valutazione') and not i.project_id %}<form method="post" action="{{ url_for('innovazione.idea_in_progetto', idea_id=i.id) }}"><button class="btn primary small">Apri un progetto da questa idea →</button></form>{% endif %}
+</details>{% endif %}
+</div>{% if i.priority %}<div class="prio">{{ i.priority }}</div>{% endif %}{% if i.project_id and current_user.is_owner %}<a class="btn small" href="{{ url_for('innovazione.progetto', project_id=i.project_id) }}">Progetto</a>{% endif %}</div>
+{% else %}<p class="empty">Nessuna idea registrata.</p>{% endfor %}</section>
+{% endblock %}

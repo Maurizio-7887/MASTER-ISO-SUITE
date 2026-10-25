@@ -1,0 +1,32 @@
+{% extends 'base.html' %}{% block title %}Rapporto di Audit {{ report.year }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">RAPPORTO DI AUDIT — {{ report.year }}</p><h1>{{ report.audit_dates or 'Date da indicare' }}</h1><p><a href="{{ url_for('sgq.audit_reports', anno=report.year) }}">← Torna ai rapporti {{ report.year }}</a> · <a href="{{ url_for('sgq.stampa_audit_report', report_id=report.id) }}">🖨️ Stampa (.docx)</a></p></div>
+
+<section class="card"><h2>Intestazione</h2>
+<form method="post" action="{{ url_for('sgq.salva_audit_report', report_id=report.id) }}" class="form-grid">
+<input type="text" name="audit_dates" value="{{ report.audit_dates or '' }}" placeholder="Date della verifica, es. 11 e 12 Agosto 2026">
+<select name="status"><option value="bozza" {% if report.status=='bozza' %}selected{% endif %}>Bozza</option><option value="completato" {% if report.status=='completato' %}selected{% endif %}>Completato</option><option value="archiviato" {% if report.status=='archiviato' %}selected{% endif %}>Archiviato</option></select>
+<input type="text" name="team_lead" value="{{ report.team_lead or '' }}" placeholder="Responsabile del Gruppo di Audit">
+<input type="text" name="team_members" value="{{ report.team_members or '' }}" placeholder="Esperti d'area">
+<button class="btn primary span2">Salva intestazione</button>
+</form></section>
+
+<section class="card"><h2>Punti ISO 9001:2015 ({{ report.findings|length }})</h2>
+<div class="compact-list">
+{% for f in report.findings %}
+<div id="rilievo-{{ f.id }}">
+{% if f.is_heading %}<h3 style="margin:14px 0 4px">{{ f.sez }} — {{ f.iso_title }}</h3>
+{% else %}
+<b>{{ f.sez }}</b> {{ f.iso_title }}
+<form method="post" action="{{ url_for('sgq.salva_audit_finding', finding_id=f.id) }}" class="form-grid" style="margin-top:6px">
+<textarea name="findings_text" placeholder="Descrizione anomalie / valutazione / giudizio" rows="2" class="span2">{{ f.findings_text or '' }}</textarea>
+<textarea name="actions_text" placeholder="Azioni decise / consigliate / suggerite" rows="2" class="span2">{{ f.actions_text or '' }}</textarea>
+<button class="btn small">Salva</button>
+</form>
+{% if f.attachments %}<div style="margin-top:6px">{% for a in f.attachments %}<span class="tag"><a href="{{ url_for('documents.download', document_id=a.document_id) }}" target="_blank">{{ a.label or 'allegato' }}</a> <form method="post" action="{{ url_for('sgq.elimina_audit_allegato', attachment_id=a.id) }}" style="display:inline" onsubmit="return confirm('Rimuovere questo allegato?');"><button class="btn small danger" style="padding:2px 8px">×</button></form></span> {% endfor %}</div>{% endif %}
+<form method="post" action="{{ url_for('sgq.carica_audit_allegato', finding_id=f.id) }}" enctype="multipart/form-data" class="inline-form" style="margin-top:6px"><input type="file" name="allegato" accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"><button class="btn small">Allega documento</button></form>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</section>
+{% endblock %}

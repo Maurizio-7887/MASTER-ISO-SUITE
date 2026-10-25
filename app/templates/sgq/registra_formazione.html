@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% block title %}Registra formazione{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">FORMAZIONE</p><h1>Registra la tua formazione</h1><p class="muted">Scegli il corso a cui hai partecipato.</p></div>
+<section class="card">
+<form method="post" action="{{ url_for('sgq.registra_formazione') }}" class="form-grid">
+<select name="course_id" required class="span2">
+<option value="">Scegli il corso…</option>
+{% for c in corsi %}<option value="{{ c.id }}">{{ c.title }}{% if c.start_date %} ({{ c.start_date.strftime('%d/%m/%Y') }}){% endif %}</option>{% endfor %}
+</select>
+<input type="text" name="outcome" placeholder="Esito (es. idoneo, superato)" class="span2">
+<textarea name="notes" placeholder="Note (facoltative)" class="span2" rows="2"></textarea>
+<button class="btn primary span2">✅ Registra</button>
+</form>
+</section>
+{% if not corsi %}<section class="card"><p class="empty">Nessun corso disponibile: chiedi al Responsabile Qualità di crearlo in "Sistema Qualità" → "Formazione".</p></section>{% endif %}
+{% endblock %}

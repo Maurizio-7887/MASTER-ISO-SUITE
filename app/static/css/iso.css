@@ -1,0 +1,42 @@
+header .azienda{color:#9fc3d9;font-weight:700;font-size:13px}
+nav.subnav{grid-template-columns:repeat(7,1fr)}
+.iso-metrics{grid-template-columns:repeat(5,1fr)}
+.iso-metrics .metric span{display:block;font-size:12px}
+@media(max-width:900px){.iso-metrics{grid-template-columns:repeat(2,1fr)}}
+.launchpad-tile small{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:3px}
+.iso-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.iso-tabs a{padding:8px 14px;border-radius:20px;background:#fff;border:1px solid var(--line);color:var(--navy);font-weight:700;font-size:13px;text-decoration:none}
+.iso-tabs a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.span2{grid-column:span 2}
+.iso-form label,.form-grid label{display:grid;gap:4px;font-weight:700;font-size:13px}
+textarea,input,select{font:inherit}
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:12px;overflow-x:auto}
+.kan-col{background:#e9eff4;border-radius:10px;padding:10px;min-height:160px}
+.kan-col h3{font-size:13px;margin:0 0 10px;display:flex;gap:6px;align-items:center}
+.kan-col h3 span{background:var(--navy);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;font-size:11px}
+.kan-col h3 em{margin-left:auto;font-style:normal;color:var(--muted)}
+.kan-card{display:block;background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;text-decoration:none;color:var(--ink);border-left:4px solid var(--cyan);box-shadow:0 2px 6px rgba(20,45,68,.06)}
+.kan-card.oriz-radicale{border-left-color:var(--orange)}.kan-card.oriz-incrementale{border-left-color:var(--navy-2)}
+.kan-card.sospeso{opacity:.6}
+.kan-card small{display:block;color:var(--muted);font-size:11px}.kan-card b{display:block;margin:3px 0;font-size:13.5px}.kan-card span{font-size:12px;color:var(--muted)}
+.stage-bar{display:flex;list-style:none;padding:0;margin:0 0 18px;gap:4px}
+.stage-bar li{flex:1;text-align:center;padding:9px 4px;background:#e2e8ee;color:var(--muted);font-weight:700;font-size:12px;border-radius:6px}
+.stage-bar li.done{background:#cdeee0;color:var(--green)}.stage-bar li.now{background:var(--navy);color:#fff}
+.gate-log{list-style:none;padding:0;margin:16px 0 0}
+.gate-log li{border-left:4px solid var(--line);padding:6px 12px;margin-bottom:10px}
+.gate-log li small{display:block;color:var(--muted)}.gate-log li p{margin:4px 0 0}
+.gate-log .dec-avanti{border-color:var(--green)}.gate-log .dec-stop{border-color:var(--red)}.gate-log .dec-attesa{border-color:var(--orange)}
+.idea-row{align-items:flex-start}.idea-row details{margin-top:6px}
+.prio{min-width:54px;height:54px;border-radius:50%;background:var(--cyan-pale);color:#08788d;font-weight:900;font-size:18px;display:grid;place-items:center}
+.score-form label{display:grid;font-size:12px;font-weight:700;gap:2px}
+.badge.st-approvata,.badge.st-progetto{background:#d6f3e6;color:var(--green)}.badge.st-scartata{background:#fde3e5;color:var(--red)}.badge.st-in_valutazione{background:#fff1d6;color:#9a6200}
+table.maturity{font-size:14px;width:100%}
+table.maturity td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.maturity tr.cap th{text-align:left;background:#eef3f7;padding:8px;font-size:13px}
+table.maturity td.voti{white-space:nowrap}
+table.maturity td.voti label{display:inline-block;margin-right:2px}
+table.maturity td.voti input{display:none}
+table.maturity td.voti span{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:6px;border:1px solid var(--line);cursor:pointer;font-weight:700}
+table.maturity td.voti input:checked+span{background:var(--navy);color:#fff;border-color:var(--navy)}
+table.maturity td input[type=text],table.maturity td input:not([type]){width:100%}
+.iso-foot{text-align:center;color:var(--muted);font-size:12px;padding:20px}

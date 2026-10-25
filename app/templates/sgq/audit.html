@@ -1,0 +1,34 @@
+{% extends 'base.html' %}{% block title %}Verifiche ispettive{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · AUDIT</p><h1>Pianificazione e report delle verifiche ispettive</h1><p><a href="{{ url_for('sgq.audit_reports') }}">📋 Vai ai Rapporti di Audit compilabili (formato PG-AUD-02, per punti ISO 9001) →</a></p></div>
+
+<section class="card"><h2>Aree da pianificare — anno {{ anno }}</h2>
+{% if aree_da_selezionare %}
+<form method="post" action="{{ url_for('sgq.pianifica_audit_selezione') }}">
+<input type="hidden" name="year" value="{{ anno }}">
+<p class="muted">Seleziona le aree da pianificare: responsabile e perimetro/scopo si compilano da soli, dovrai indicare solo data ed esito.</p>
+<div class="compact-list">
+{% for area, responsabile in aree_da_selezionare %}<div><label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="aree" value="{{ area }}" style="width:auto;height:auto"><b>{{ area }}</b> <span class="muted">— responsabile {{ responsabile }}</span></label></div>{% endfor %}
+</div>
+<button class="btn primary" style="margin-top:14px">Pianifica le aree selezionate</button>
+</form>
+{% else %}<p class="empty">Tutte le aree standard sono già pianificate per il {{ anno }}.</p>{% endif %}
+</section>
+
+<section class="card"><h2>Anno</h2><form method="get" class="inline-form"><select name="anno" onchange="this.form.submit()">{% for a in anni_disponibili %}<option value="{{ a }}" {% if a==anno %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></form></section>
+
+{% for a in elenco %}
+<section class="card" {% if a.planned_date and a.planned_date < oggi and a.status=='pianificata' %}style="border-left:4px solid #d9534f"{% endif %}>
+<h2>{{ a.area_process }} <span class="badge {{ 'completato' if a.status=='eseguita' else ('da_compilare' if a.status=='pianificata' else '') }}">{{ a.status|upper }}</span></h2>
+{% if a.scope %}<p class="muted" style="white-space:pre-line">{{ a.scope }}</p>{% endif %}
+<form method="post" action="{{ url_for('sgq.salva_audit', item_id=a.id) }}" class="form-grid">
+<label>Data pianificata<input type="date" name="planned_date" value="{{ a.planned_date.isoformat() if a.planned_date else '' }}"></label>
+<label>Data effettiva<input type="date" name="actual_date" value="{{ a.actual_date.isoformat() if a.actual_date else '' }}"></label>
+<label>Responsabile<input type="text" name="auditor" value="{{ a.auditor or '' }}"></label>
+<label>Stato<select name="status"><option value="pianificata" {% if a.status=='pianificata' %}selected{% endif %}>Pianificata</option><option value="eseguita" {% if a.status=='eseguita' %}selected{% endif %}>Eseguita</option><option value="annullata" {% if a.status=='annullata' %}selected{% endif %}>Annullata</option></select></label>
+<button class="btn small primary span2">Salva</button>
+</form>
+</section>
+{% else %}
+<section class="card"><p class="empty">Nessuna verifica pianificata per il {{ anno }}.</p></section>
+{% endfor %}
+{% endblock %}

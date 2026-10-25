@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% block title %}Rapporti di Audit{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · AUDIT — §9.2</p><h1>Rapporti di Audit (verifiche ispettive interne)</h1><p class="muted">Stesso formato storico PG-AUD-02: un rapporto per verifica svolta, con tutti i punti ISO 9001 pronti da compilare online. Quando serve, si stampa nel formato noto.</p><p><a href="{{ url_for('sgq.audit') }}">← Torna alla pianificazione delle verifiche</a></p></div>
+
+<section class="card"><h2>Nuovo Rapporto di Audit — anno {{ anno }}</h2>
+<form method="post" action="{{ url_for('sgq.nuovo_audit_report') }}" class="form-grid">
+<input type="hidden" name="year" value="{{ anno }}">
+{% if piano_anno %}<label>Verifica pianificata collegata (facoltativo)<select name="plan_item_id"><option value="">— nessuna —</option>{% for p in piano_anno %}<option value="{{ p.id }}">{{ p.area_process }}{% if p.planned_date %} — {{ p.planned_date.strftime('%d/%m/%Y') }}{% endif %}</option>{% endfor %}</select></label>{% endif %}
+<input type="text" name="audit_dates" placeholder="Date della verifica, es. 11 e 12 Agosto 2026">
+<input type="text" name="team_lead" placeholder="Responsabile del Gruppo di Audit">
+<input type="text" name="team_members" placeholder="Esperti d'area (separati da virgola)">
+<button class="btn primary span2">Crea rapporto — genera automaticamente tutti i punti ISO 9001</button>
+</form></section>
+
+<section class="card"><h2>Anno</h2><form method="get" class="inline-form"><select name="anno" onchange="this.form.submit()">{% for a in anni_disponibili %}<option value="{{ a }}" {% if a==anno %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></form></section>
+
+<section class="card document-list"><h2>Rapporti {{ anno }}</h2>
+{% for r in elenco %}<div class="document-row">
+<div><span class="badge {{ 'live' if r.status=='completato' else ('completato' if r.status=='archiviato' else '') }}">{{ r.status|upper }}</span>
+<b>{{ r.audit_dates or 'Date non ancora indicate' }}</b>
+<p>{% if r.team_lead %}Responsabile: {{ r.team_lead }}{% endif %}{% if r.team_members %} · Esperti d'area: {{ r.team_members }}{% endif %}{% if r.file_reference %} · Rif.: {{ r.file_reference }}{% endif %}</p>
+<small>{{ r.findings|length }} punti ISO 9001</small></div>
+<a class="btn" href="{{ url_for('sgq.audit_report_detail', report_id=r.id) }}">Apri e compila</a>
+<a class="btn" href="{{ url_for('sgq.stampa_audit_report', report_id=r.id) }}">🖨️ Stampa (.docx)</a>
+</div>{% else %}<p class="empty">Nessun Rapporto di Audit per il {{ anno }}. Creane uno sopra.</p>{% endfor %}
+</section>
+{% endblock %}

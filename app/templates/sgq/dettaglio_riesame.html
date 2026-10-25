@@ -1,0 +1,110 @@
+{% extends 'base.html' %}{% block title %}Riesame {{ r.review_date.strftime('%d/%m/%Y') }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · §9.3</p><h1>Riesame della Direzione — {{ r.review_date.strftime('%d/%m/%Y') }}</h1><p><a href="{{ url_for('sgq.riesame_direzione') }}">← Elenco riesami</a> · <a href="{{ url_for('sgq.stampa_riesame', review_id=r.id) }}">🖨️ Stampa verbale (.docx, formato storico MOD-RD)</a></p></div>
+
+<form method="post" action="{{ url_for('sgq.salva_riesame', review_id=r.id) }}">
+<section class="card"><h2>Dati generali</h2>
+<div class="form-grid">
+<label>Data del riesame<input type="date" name="review_date" value="{{ r.review_date.isoformat() }}"></label>
+<label>Periodo di riferimento (anno riesaminato)<input type="text" name="reference_period" value="{{ r.reference_period or '' }}" placeholder="es. 2025"></label>
+<label>Partecipanti (firme)<input type="text" name="participants" value="{{ r.participants or '' }}" class="span2"></label>
+<label>Data "Visto: Direzione"<input type="date" name="signature_date" value="{{ r.signature_date.isoformat() if r.signature_date else '' }}"></label>
+</div></section>
+
+<section class="card"><h2>Il riesame si è basato sulle risultanze documentali di</h2>
+<p class="muted">Come nel formato storico del verbale — spunta le voci su cui si è basato questo riesame.</p>
+<div class="compact-list">
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_audit_reports" style="width:auto;height:auto" {% if r.basis_audit_reports %}checked{% endif %}> Rapporti verifiche ispettive interne</label>
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_certification_reports" style="width:auto;height:auto" {% if r.basis_certification_reports %}checked{% endif %}> Rapporti verifiche certificative</label>
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_previous_review_actions" style="width:auto;height:auto" {% if r.basis_previous_review_actions %}checked{% endif %}> Azioni condotte in conseguenza del precedente riesame</label>
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_customer_feedback" style="width:auto;height:auto" {% if r.basis_customer_feedback %}checked{% endif %}> Reclami ed informazioni di ritorno dai clienti</label>
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_corrective_actions_trend" style="width:auto;height:auto" {% if r.basis_corrective_actions_trend %}checked{% endif %}> Analisi andamento azioni correttive</label>
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_preventive_actions_trend" style="width:auto;height:auto" {% if r.basis_preventive_actions_trend %}checked{% endif %}> Analisi andamento azioni preventive</label>
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_rac" style="width:auto;height:auto" {% if r.basis_rac %}checked{% endif %}> RAC avviate relativamente alle diverse aree/attività</label>
+<label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" name="basis_context_analysis" style="width:auto;height:auto" {% if r.basis_context_analysis %}checked{% endif %}> Analisi del contesto</label>
+</div></section>
+
+<section class="card"><h2>Note</h2>
+<textarea name="notes" rows="2">{{ r.notes or '' }}</textarea>
+</section>
+
+<section class="card"><h2>Conclusioni</h2>
+<textarea name="conclusions" rows="3">{{ r.conclusions or '' }}</textarea>
+</section>
+
+<section class="card"><button class="btn primary">💾 Salva riesame</button></section>
+</form>
+
+<h2 style="margin-top:24px">PARTE A: Elementi in uscita — analisi per punto</h2>
+<p class="muted">Per ogni punto: cosa va bene, cosa non va (criticità/rilievi), ed eventuali documenti a supporto — riportati anche nella stampa finale.</p>
+
+{% for s in r.sections %}
+<section class="card" id="sezione-{{ s.id }}"><h2>{{ s.title }}</h2>
+{% if s.section_key in grafici_per_sezione %}<img src="{{ grafici_per_sezione[s.section_key] }}" alt="Grafico {{ s.title }}" style="max-width:100%;margin-bottom:10px">{% endif %}
+<form method="post" action="{{ url_for('sgq.salva_riesame_sezione', section_id=s.id) }}" class="form-grid">
+<textarea name="positives_text" placeholder="Cosa va bene" class="span2" rows="3">{{ s.positives_text or '' }}</textarea>
+<textarea name="negatives_text" placeholder="Cosa non va / criticità" class="span2" rows="3">{{ s.negatives_text or '' }}</textarea>
+<button class="btn small primary span2">Salva analisi</button>
+</form>
+<form method="post" action="{{ url_for('sgq.genera_bozza_riesame_sezione', section_id=s.id) }}" style="margin-top:6px">
+<button class="btn small">🤖 Riformula con AI (usa gli appunti sopra + dati reali del programma)</button>
+</form>
+{% if s.attachments %}<div style="margin-top:10px">{% for a in s.attachments %}<span class="tag"><a href="{{ url_for('documents.download', document_id=a.document_id) }}" target="_blank">{{ a.label or 'allegato' }}</a> <form method="post" action="{{ url_for('sgq.elimina_riesame_allegato', attachment_id=a.id) }}" style="display:inline" onsubmit="return confirm('Rimuovere questo allegato?');"><button class="btn small danger" style="padding:2px 8px">×</button></form></span> {% endfor %}</div>{% endif %}
+<form method="post" action="{{ url_for('sgq.carica_riesame_allegato', section_id=s.id) }}" enctype="multipart/form-data" class="inline-form" style="margin-top:10px"><input type="file" name="allegato" accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"><button class="btn small">Allega documento</button></form>
+</section>
+{% endfor %}
+
+<section class="card" id="piani"><h2>Verifiche ai piani di miglioramento dell'anno precedente</h2>
+<p class="muted">Attività decise nel riesame precedente, con l'esito raggiunto al 31/12. Voci registrate: {{ dati_piani.verifica_precedente }} · nuove proposte: {{ dati_piani.nuova_proposta }}.</p>
+<div class="compact-list">
+{% for voce in r.action_items if voce.kind == 'verifica_precedente' %}
+<form method="post" action="{{ url_for('sgq.salva_riesame_azione', item_id=voce.id) }}" class="form-grid" style="margin-bottom:10px">
+<textarea name="activity" placeholder="Attività" class="span2" rows="2">{{ voce.activity or '' }}</textarea>
+<input type="text" name="resources" placeholder="Risorse" value="{{ voce.resources or '' }}">
+<input type="text" name="responsible" placeholder="Responsabile" value="{{ voce.responsible or '' }}">
+<textarea name="status_text" placeholder="Risultati al 31/12" class="span2" rows="2">{{ voce.status_text or '' }}</textarea>
+<button class="btn small primary">Salva</button>
+<button class="btn small danger" formaction="{{ url_for('sgq.elimina_riesame_azione', item_id=voce.id) }}" onclick="return confirm('Eliminare questa voce?');">Elimina</button>
+</form>
+{% else %}<p class="empty">Nessuna voce.</p>{% endfor %}
+</div>
+<form method="post" action="{{ url_for('sgq.nuova_riesame_azione', review_id=r.id) }}"><input type="hidden" name="kind" value="verifica_precedente"><button class="btn small">➕ Aggiungi voce</button></form>
+</section>
+
+<section class="card"><h2>Considerazioni e proposte di miglioramento</h2>
+<p class="muted">Nuove attività decise in questo riesame, con risorse, responsabile e data di effettuazione prevista.</p>
+<div class="compact-list">
+{% for voce in r.action_items if voce.kind == 'nuova_proposta' %}
+<form method="post" action="{{ url_for('sgq.salva_riesame_azione', item_id=voce.id) }}" class="form-grid" style="margin-bottom:10px">
+<textarea name="activity" placeholder="Attività" class="span2" rows="2">{{ voce.activity or '' }}</textarea>
+<input type="text" name="resources" placeholder="Risorse economiche" value="{{ voce.resources or '' }}">
+<input type="text" name="responsible" placeholder="Responsabile" value="{{ voce.responsible or '' }}">
+<input type="text" name="status_text" placeholder="Data effettuazione / stato" value="{{ voce.status_text or '' }}" class="span2">
+<button class="btn small primary">Salva</button>
+<button class="btn small danger" formaction="{{ url_for('sgq.elimina_riesame_azione', item_id=voce.id) }}" onclick="return confirm('Eliminare questa voce?');">Elimina</button>
+</form>
+{% else %}<p class="empty">Nessuna voce.</p>{% endfor %}
+</div>
+<form method="post" action="{{ url_for('sgq.nuova_riesame_azione', review_id=r.id) }}"><input type="hidden" name="kind" value="nuova_proposta"><button class="btn small">➕ Aggiungi voce</button></form>
+</section>
+
+<details class="card"><summary style="cursor:pointer"><h2 style="display:inline">Struttura generica ISO 9001 §9.3 (ingressi/uscite per punto norma)</h2></summary>
+<form method="post" action="{{ url_for('sgq.salva_riesame', review_id=r.id) }}" style="margin-top:14px">
+<h3>Ingressi (§9.3.2)</h3>
+<label>Esiti delle verifiche ispettive precedenti<textarea name="input_audit_results" rows="2">{{ r.input_audit_results or '' }}</textarea></label>
+<label>Feedback dei clienti<textarea name="input_customer_feedback" rows="2">{{ r.input_customer_feedback or '' }}</textarea></label>
+<label>Prestazioni dei processi e conformità dei prodotti<textarea name="input_process_performance" rows="2">{{ r.input_process_performance or '' }}</textarea></label>
+<label>Non conformità e azioni correttive<textarea name="input_nonconformities" rows="2">{{ r.input_nonconformities or '' }}</textarea></label>
+<label>Stato delle azioni correttive dei riesami precedenti<textarea name="input_corrective_actions_status" rows="2">{{ r.input_corrective_actions_status or '' }}</textarea></label>
+<label>Stato di avanzamento degli obiettivi qualità<textarea name="input_objectives_status" rows="2">{{ r.input_objectives_status or '' }}</textarea></label>
+<label>Adeguatezza delle risorse<textarea name="input_resources_adequacy" rows="2">{{ r.input_resources_adequacy or '' }}</textarea></label>
+<label>Rischi e opportunità<textarea name="input_risks_opportunities" rows="2">{{ r.input_risks_opportunities or '' }}</textarea></label>
+<h3>Uscite (§9.3.3)</h3>
+<label>Opportunità di miglioramento<textarea name="output_improvement_opportunities" rows="2">{{ r.output_improvement_opportunities or '' }}</textarea></label>
+<label>Modifiche al sistema di gestione<textarea name="output_system_changes" rows="2">{{ r.output_system_changes or '' }}</textarea></label>
+<label>Necessità di risorse<textarea name="output_resource_needs" rows="2">{{ r.output_resource_needs or '' }}</textarea></label>
+<button class="btn primary" style="margin-top:10px">💾 Salva sezione ISO §9.3</button>
+</form>
+</details>
+
+<a class="btn" href="{{ url_for('sgq.riesame_direzione') }}">← Elenco riesami</a>
+{% endblock %}

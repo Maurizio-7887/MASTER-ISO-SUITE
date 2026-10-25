@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% block title %}Riesame della Direzione{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · §9.3</p><h1>Riesame della Direzione</h1><p class="muted">Un record per ogni riesame periodico, con ingressi e uscite tracciati separatamente come richiesto dalla norma.</p></div>
+
+<section class="card"><form method="post" action="{{ url_for('sgq.nuovo_riesame') }}" class="inline-form">
+<input type="date" name="review_date" value="{{ oggi.isoformat() }}">
+<button class="btn primary">➕ Nuovo riesame</button>
+</form></section>
+
+<section class="card document-list">
+{% for r in elenco %}<div class="document-row"><div><b>Riesame del {{ r.review_date.strftime('%d/%m/%Y') }}</b>{% if r.reference_period %} <span class="muted">— relativo al {{ r.reference_period }}</span>{% endif %}{% if r.participants %}<p class="muted">{{ r.participants }}</p>{% endif %}</div><a class="btn small" href="{{ url_for('sgq.dettaglio_riesame', review_id=r.id) }}">Apri</a></div>
+{% else %}<p class="empty">Nessun riesame registrato.</p>{% endfor %}
+</section>
+{% endblock %}

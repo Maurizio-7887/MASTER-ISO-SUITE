@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% block title %}Non conformità{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · NON CONFORMITÀ</p><h1>Non conformità — report 8D</h1><p class="muted">Stessa struttura del modulo 8D già usato in azienda (D1-D8).</p></div>
+
+<section class="card"><h2>➕ Apri nuova non conformità</h2>
+<form method="post" action="{{ url_for('sgq.nuova_nc') }}" class="form-grid">
+<input type="text" name="number" placeholder="Numero (es. 08_2026)">
+<input type="date" name="opened_at">
+<input type="text" name="customer" placeholder="Cliente">
+<input type="text" name="article_code" placeholder="Codice articolo">
+<input type="number" name="pieces" placeholder="N. pezzi">
+<input type="text" name="where_found" placeholder="Dove è stata rilevata">
+<input type="text" name="responsible" placeholder="Responsabile">
+<textarea name="d2_description" placeholder="D2 — Descrizione del problema *" required class="span2" rows="2"></textarea>
+<button class="btn primary span2">Apri non conformità</button>
+</form></section>
+
+<section class="card"><form method="get" class="search-row"><select name="stato" onchange="this.form.submit()"><option value="">Tutte</option><option value="aperta" {% if stato=='aperta' %}selected{% endif %}>Solo aperte</option><option value="chiusa" {% if stato=='chiusa' %}selected{% endif %}>Solo chiuse</option></select></form></section>
+
+<section class="card document-list">
+{% for nc in elenco %}<div class="document-row"><div>
+<span class="badge {{ 'completato' if nc.status=='chiusa' else 'da_compilare' }}">{{ nc.status|upper }}</span>
+<b>{{ nc.number or ('NC #' ~ nc.id) }}</b> — {{ nc.customer or '—' }} · {{ nc.opened_at.strftime('%d/%m/%Y') }}
+<p>{{ nc.d2_description or '—' }}</p>
+</div><a class="btn small" href="{{ url_for('sgq.dettaglio_nc', nc_id=nc.id) }}">Apri</a></div>
+{% else %}<p class="empty">Nessuna non conformità.</p>{% endfor %}
+</section>
+{% endblock %}

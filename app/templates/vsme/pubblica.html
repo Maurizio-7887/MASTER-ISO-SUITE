@@ -1,0 +1,53 @@
+{% extends 'base.html' %}{% block title %}VSME — Estratto {{ anno }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">DICHIARAZIONE VOLONTARIA DI SOSTENIBILITÀ — VSME ESRS</p><h1>Indicatori di sostenibilità {{ anno }}</h1><p class="muted">Estratto redatto su base volontaria secondo lo Standard Europeo di Rendicontazione di Sostenibilità per le PMI non quotate (VSME ESRS, EFRAG). Il nucleo della dichiarazione è il Modulo Base; eventuali indicatori aggiuntivi mostrati qui sotto sono approfondimenti facoltativi, compilati e pubblicati solo perché già richiesti da un partner commerciale o finanziario. Pronto per la pubblicazione sul sito internet.</p></div>
+
+{% macro sezione(m) %}
+<section class="card document-list"><h2>{{ m.codice }} — {{ m.nome }}</h2>
+{% for i in m.voci %}
+<div class="document-row"><div>
+<b>{{ i.indicator_name }}</b>{% if i.unit %} <span class="muted">({{ i.unit }})</span>{% endif %}
+<p>Valore: <b>{{ i.value }}</b></p>
+{% if i.notes %}<small class="muted">{{ i.notes }}</small>{% endif %}
+</div></div>
+{% endfor %}
+</section>
+{% endmacro %}
+
+{% if not (moduli_base or moduli_narrativi or moduli_bp) %}
+<section class="card"><p class="empty">Nessun indicatore compilato e marcato "pubblica sul sito" per l'anno {{ anno }}.</p></section>
+{% endif %}
+
+{% if moduli_base %}
+<section class="card pillar-banner pillar-sempre">
+<span class="pillar-badge pillar-badge-sempre">{{ pillar_info['Base'].badge }}</span>
+<h2 style="margin-top:8px">{{ pillar_info['Base'].titolo }}</h2>
+</section>
+{% for m in moduli_base %}{{ sezione(m) }}{% endfor %}
+{% endif %}
+
+{% if moduli_narrativi or moduli_bp %}
+<section class="card pillar-banner pillar-facoltativo">
+<span class="pillar-badge pillar-badge-facoltativo">SOLO SU RICHIESTA</span>
+<h2 style="margin-top:8px">Approfondimenti facoltativi pubblicati</h2>
+<p class="muted" style="margin:0">Gli indicatori seguenti non fanno parte del nucleo minimo dello Standard VSME: sono stati compilati e resi pubblici perché già richiesti da una banca, un finanziatore o un grande cliente/capogruppo della filiera.</p>
+</section>
+{% endif %}
+
+{% if moduli_narrativi %}
+<section class="card pillar-banner pillar-facoltativo">
+<span class="pillar-badge pillar-badge-facoltativo">{{ pillar_info['Narrativo-PAT'].badge }}</span>
+<h2 style="margin-top:8px">{{ pillar_info['Narrativo-PAT'].titolo }}</h2>
+</section>
+{% for m in moduli_narrativi %}{{ sezione(m) }}{% endfor %}
+{% endif %}
+
+{% if moduli_bp %}
+<section class="card pillar-banner pillar-facoltativo">
+<span class="pillar-badge pillar-badge-facoltativo">{{ pillar_info['Partner Commerciali'].badge }}</span>
+<h2 style="margin-top:8px">{{ pillar_info['Partner Commerciali'].titolo }}</h2>
+</section>
+{% for m in moduli_bp %}{{ sezione(m) }}{% endfor %}
+{% endif %}
+
+<a class="btn" href="{{ url_for('vsme.index', anno=anno) }}">← Torna al registro</a>
+{% endblock %}

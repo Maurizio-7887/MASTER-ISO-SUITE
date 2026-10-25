@@ -1,0 +1,159 @@
+{% extends 'base.html' %}{% block title %}Registro formazione{% endblock %}{% block content %}
+<style>
+.rf-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:22px}
+.rf-toolbar input[type=text]{flex:1;min-width:220px}
+.rf-chip{border:2px solid var(--navy);border-radius:99px;padding:8px 16px;font-weight:800;font-size:12px;letter-spacing:.04em;background:#fff;color:var(--navy);cursor:pointer;white-space:nowrap}
+.rf-chip.active{background:var(--navy);color:#fff}
+.rf-count{margin-left:auto;color:var(--muted);font-weight:700;font-size:13px;white-space:nowrap}
+.rf-timeline{position:relative;padding-left:26px}
+.rf-timeline::before{content:"";position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:repeating-linear-gradient(var(--line) 0 6px,transparent 6px 12px)}
+.rf-card{position:relative;background:var(--surface);border:2px solid var(--navy);border-radius:10px;margin-bottom:26px;box-shadow:5px 5px 0 rgba(16,43,67,.08)}
+.rf-dot{position:absolute;left:-26px;top:26px;width:14px;height:14px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 2px var(--navy)}
+.rf-dot.eseguito{background:var(--green)}
+.rf-dot.pianificato{background:var(--cyan)}
+.rf-head{display:flex;align-items:flex-start;gap:16px;padding:18px 20px;border-bottom:2px dashed var(--line)}
+.rf-year{background:var(--navy);color:#fff;font-weight:900;font-size:20px;border-radius:6px;padding:8px 14px;min-width:56px;text-align:center}
+.rf-head h3{margin:0 0 6px;font-size:19px;letter-spacing:.01em;text-transform:uppercase}
+.rf-meta{color:var(--muted);font-size:13px;display:flex;gap:16px;flex-wrap:wrap}
+.rf-meta span{margin-right:4px}
+.rf-meta b{color:var(--ink)}
+.rf-stamp{margin-left:auto;border:2px solid var(--green);color:var(--green);font-weight:900;font-size:11px;letter-spacing:.08em;border-radius:6px;padding:5px 10px;white-space:nowrap;align-self:center}
+.rf-stamp.pianificato{border-color:var(--cyan);color:#0a7c94}
+.rf-body{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:18px 20px}
+.rf-col+.rf-col{border-left:2px dashed var(--line);padding-left:20px;margin-left:20px}
+.rf-label{font-size:11px;font-weight:900;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 0 10px}
+.rf-sess{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px dotted var(--line);font-size:13px}
+.rf-sess:last-child{border-bottom:0}
+.rf-sess .d{color:#0a7c94;font-weight:700;white-space:nowrap}
+.rf-sess .a{flex:1}
+.rf-sess .h{background:var(--cyan-pale);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:800;color:#0a7c94}
+.rf-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:5px 10px 5px 8px;font-size:12px;margin:0 6px 6px 0;background:#fff}
+.rf-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;margin-right:2px}
+.rf-pill .dot.nd{background:var(--muted)}
+.rf-pill .val{color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:800;margin-left:4px}
+.rf-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;background:#f8fafc;border-radius:0 0 8px 8px}
+.rf-foot b{color:var(--ink)}
+@media(max-width:760px){.rf-body{grid-template-columns:1fr}.rf-col+.rf-col{border-left:0;padding-left:0;margin-left:0;margin-top:14px;padding-top:14px;border-top:2px dashed var(--line)}}
+</style>
+
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · FORMAZIONE</p><h1>Registro formazione — corsi, argomenti e valutazioni</h1><p class="muted">Vista di sola consultazione, pensata per essere letta o stampata: date e argomenti trattati sessione per sessione, valutazione di ogni allievo. Per modificare i dati vai su <a href="{{ url_for('sgq.formazione') }}">Corsi</a>.</p></div>
+
+<section class="card"><div class="metrics">
+<div class="metric"><small>Corsi registrati</small><strong>{{ corsi_vista|length }}</strong></div>
+<div class="metric"><small>Anni coperti</small><strong>{{ anni|length }}</strong></div>
+<div class="metric"><small>Partecipazioni allievi</small><strong>{{ totale_partecipazioni }}</strong></div>
+</div></section>
+
+<section class="card">
+<div class="rf-toolbar">
+<input type="text" id="rf-cerca" placeholder="Cerca per corso, argomento o allievo…">
+<span class="rf-chip active" data-anno="tutti">TUTTI GLI ANNI</span>
+{% for a in anni %}<span class="rf-chip" data-anno="{{ a }}">{{ a }}</span>{% endfor %}
+<span class="rf-count" id="rf-count">{{ corsi_vista|length }} / {{ corsi_vista|length }} corsi</span>
+</div>
+
+<div class="rf-timeline" id="rf-lista">
+{% for cv in corsi_vista %}{% set c = cv.corso %}
+<div class="rf-item" data-anno="{{ cv.anno or '' }}" data-cerca="{{ (c.title ~ ' ' ~ (c.teacher or '') ~ ' ' ~ cv.allievi|map(attribute=0)|join(' ') ~ ' ' ~ c.sessions_list|map(attribute='topic')|select('string')|join(' '))|lower }}">
+<div class="rf-card">
+<span class="rf-dot {{ 'eseguito' if cv.eseguito else 'pianificato' }}"></span>
+<div class="rf-head">
+{% if cv.anno %}<div class="rf-year">{{ cv.anno }}</div>{% endif %}
+<div style="flex:1">
+<h3>{{ c.title }}</h3>
+<div class="rf-meta">
+{% if c.start_date %}<span>Periodo: <b>{{ c.start_date.strftime('%d/%m/%Y') }}{% if c.end_date and c.end_date != c.start_date %} → {{ c.end_date.strftime('%d/%m/%Y') }}{% endif %}</b></span>{% endif %}
+{% if c.hours %}<span>Ore corso: <b>{{ c.hours }}h</b></span>{% endif %}
+{% if c.teacher %}<span>Docente: <b>{{ c.teacher }}</b></span>{% endif %}
+</div></div>
+<span class="rf-stamp {{ '' if cv.eseguito else 'pianificato' }}">{{ 'ESEGUITO' if cv.eseguito else 'PIANIFICATO' }}</span>
+</div>
+<div class="rf-body">
+<div class="rf-col">
+<p class="rf-label">Date &amp; argomenti trattati</p>
+{% if c.sessions_list %}{% for s in c.sessions_list %}<div class="rf-sess"><span class="d">{{ s.session_date.strftime('%d/%m/%Y') if s.session_date else '—' }}</span><span class="a">{{ s.topic or '' }}</span>{% if s.hours %}<span class="h">{{ s.hours }}h</span>{% endif %}</div>{% endfor %}{% else %}<p class="muted" style="font-size:13px">Nessuna sessione registrata.</p>{% endif %}
+</div>
+<div class="rf-col">
+<p class="rf-label">Allievi &amp; valutazione finale ({{ cv.allievi|length }})</p>
+{% for nome, esito in cv.allievi %}<span class="rf-pill"><span class="dot {{ '' if esito else 'nd' }}"></span>{{ nome }}<span class="val">{{ esito or 'n.d.' }}</span></span>{% else %}<p class="muted" style="font-size:13px">Nessun partecipante.</p>{% endfor %}
+</div>
+</div>
+<div class="rf-foot"><span>Ore totali corso: <b>{{ c.hours ~ 'h' if c.hours else '—' }}</b></span>{% if c.notes %}<span>{{ c.notes }}</span>{% endif %}</div>
+<details style="border-top:1px solid var(--line);padding:10px 20px">
+<summary style="cursor:pointer;font-weight:800;font-size:12px;letter-spacing:.04em;color:var(--navy)">✏️ MODIFICA — dati corso, sessioni, partecipanti</summary>
+<div style="margin-top:12px">
+<form method="post" action="{{ url_for('sgq.salva_corso', course_id=c.id) }}" class="form-grid">
+<input type="text" name="title" value="{{ c.title }}" class="span2">
+<input type="text" name="topic_area" value="{{ c.topic_area or '' }}" placeholder="Area">
+<input type="text" name="teacher" value="{{ c.teacher or '' }}" placeholder="Docente">
+<input type="date" name="start_date" value="{{ c.start_date.isoformat() if c.start_date else '' }}">
+<input type="date" name="end_date" value="{{ c.end_date.isoformat() if c.end_date else '' }}">
+<input type="text" name="hours" value="{{ c.hours or '' }}" placeholder="Ore" inputmode="decimal">
+<input type="text" name="notes" value="{{ c.notes or '' }}" placeholder="Note" class="span2">
+<button class="btn small primary">Salva</button>
+</form>
+<form method="post" action="{{ url_for('sgq.elimina_corso', course_id=c.id) }}" onsubmit="return confirm('Eliminare questo corso e tutte le partecipazioni collegate?');" style="margin-top:6px"><button class="btn small">🗑 Elimina corso</button></form>
+
+<h3 style="margin-top:14px;font-size:14px">Sessioni ({{ c.sessions_list|length }})</h3>
+{% if c.sessions_list %}<div class="compact-list">{% for s in c.sessions_list %}<div><b>{{ s.session_date.strftime('%d/%m/%Y') if s.session_date else '—' }}</b> — {{ s.hours or '—' }} h — {{ s.topic or '' }} <form method="post" action="{{ url_for('sgq.elimina_sessione_corso', session_id=s.id) }}" style="display:inline" onsubmit="return confirm('Eliminare questa sessione?');"><button class="btn small" style="padding:2px 8px">×</button></form></div>{% endfor %}</div>{% else %}<p class="empty">Nessuna sessione registrata.</p>{% endif %}
+<form method="post" action="{{ url_for('sgq.nuova_sessione_corso', course_id=c.id) }}" class="inline-form" style="margin-top:8px">
+<input type="date" name="session_date"><input type="text" name="hours" placeholder="Ore" inputmode="decimal"><input type="text" name="topic" placeholder="Argomento"><button class="btn small">➕ Aggiungi sessione</button>
+</form>
+
+<h3 style="margin-top:14px;font-size:14px">Partecipanti ({{ c.attendances|length }})</h3>
+{% if c.attendances %}
+<div class="table-wrap"><table><thead><tr><th>Persona</th><th>Esito</th><th>Note</th></tr></thead><tbody>
+{% for a in c.attendances %}<tr><td colspan="3"><form method="post" action="{{ url_for('sgq.salva_partecipazione', attendance_id=a.id) }}" class="inline-form">
+<b style="min-width:160px;display:inline-block">{{ a.user.name if a.user else a.employee.full_name }}</b>
+<input type="text" name="outcome" value="{{ a.outcome or '' }}" placeholder="Esito (es. idoneo)">
+<input type="text" name="notes" value="{{ a.notes or '' }}" placeholder="Note">
+<button class="btn small">Salva</button>
+</form>
+<form method="post" action="{{ url_for('sgq.elimina_partecipazione', attendance_id=a.id) }}" onsubmit="return confirm('Rimuovere questa persona da questo corso?');" class="inline-form"><button class="btn small">🗑</button></form>
+</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p class="empty">Nessun partecipante registrato.</p>{% endif %}
+<form method="post" action="{{ url_for('sgq.aggiungi_partecipante', course_id=c.id) }}" class="inline-form" style="margin-top:8px">
+<select name="persona" required><option value="">Aggiungi persona…</option>{% for tipo,pid,nome in persone %}<option value="{{ tipo }}{{ pid }}">{{ nome }}</option>{% endfor %}</select>
+<input type="text" name="outcome" placeholder="Esito">
+<button class="btn success small">➕ Aggiungi</button>
+</form>
+</div>
+</details>
+</div>
+</div>
+{% else %}<p class="empty">Nessun corso registrato.</p>{% endfor %}
+</div>
+</section>
+
+<script>
+(function(){
+  var input = document.getElementById('rf-cerca');
+  var chips = document.querySelectorAll('.rf-chip');
+  var items = document.querySelectorAll('.rf-item');
+  var countEl = document.getElementById('rf-count');
+  var annoAttivo = 'tutti';
+  function applica(){
+    var q = (input.value || '').toLowerCase().trim();
+    var visibili = 0;
+    items.forEach(function(it){
+      var annoOk = annoAttivo === 'tutti' || it.getAttribute('data-anno') === annoAttivo;
+      var testoOk = !q || it.getAttribute('data-cerca').indexOf(q) !== -1;
+      var mostra = annoOk && testoOk;
+      it.style.display = mostra ? '' : 'none';
+      if (mostra) visibili++;
+    });
+    countEl.textContent = visibili + ' / ' + items.length + ' corsi';
+  }
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      annoAttivo = chip.getAttribute('data-anno');
+      applica();
+    });
+  });
+  input.addEventListener('input', applica);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% block title %}{{ p.code }} · {{ p.title }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">PROGETTO DI INNOVAZIONE · {{ p.code }}</p><h1>{{ p.title }}</h1><p class="muted">Fase {{ p.stage }} — {{ FASI_INNOVAZIONE[p.stage][0] }}: {{ FASI_INNOVAZIONE[p.stage][1] }}</p></div>
+{% include 'innovazione/_nav.html' %}
+<ol class="stage-bar">{% for f, (nome, _) in FASI_INNOVAZIONE.items() %}<li class="{{ 'done' if f < p.stage else ('now' if f == p.stage else '') }}">{{ nome }}</li>{% endfor %}</ol>
+<div class="two-col">
+<section class="card"><h2>Scheda del progetto</h2><form method="post" class="form-grid">
+<label class="span2">Titolo<input name="title" value="{{ p.title }}"></label>
+<label class="span2">Obiettivo e valore atteso<textarea name="objective" rows="3">{{ p.objective or '' }}</textarea></label>
+<label>Tipo<select name="kind">{% for t in TIPI %}<option value="{{ t }}" {{ 'selected' if p.kind==t }}>{{ t }}</option>{% endfor %}</select></label>
+<label>Orizzonte<select name="horizon">{% for k, v in ORIZZONTI.items() %}<option value="{{ k }}" {{ 'selected' if p.horizon==k }}>{{ v }}</option>{% endfor %}</select></label>
+<label>Tecnologia<select name="technology"><option value="">—</option>{% for t in TECNOLOGIE %}<option {{ 'selected' if p.technology==t }}>{{ t }}</option>{% endfor %}</select></label>
+<label>Responsabile<input name="responsible" value="{{ p.responsible or '' }}"></label>
+<label class="span2">Team<input name="team" value="{{ p.team or '' }}"></label>
+<label>Inizio<input type="date" name="start_date" value="{{ p.start_date.isoformat() if p.start_date }}"></label>
+<label>Termine previsto<input type="date" name="target_date" value="{{ p.target_date.isoformat() if p.target_date }}"></label>
+<label>Budget (€)<input name="budget" value="{{ '%.0f'|format(p.budget) if p.budget is not none }}"></label>
+<label>Speso (€)<input name="spent" value="{{ '%.0f'|format(p.spent) if p.spent is not none }}"></label>
+<label>Beneficio annuo atteso (€)<input name="expected_benefit" value="{{ '%.0f'|format(p.expected_benefit) if p.expected_benefit is not none }}"></label>
+<label>Beneficio realizzato (€)<input name="realized_benefit" value="{{ '%.0f'|format(p.realized_benefit) if p.realized_benefit is not none }}"></label>
+<label class="span2">Finanziamento (bando, credito d'imposta, voucher)<input name="funding" value="{{ p.funding or '' }}"></label>
+<label class="span2">Proprietà intellettuale e know-how<textarea name="ip_notes" rows="2">{{ p.ip_notes or '' }}</textarea></label>
+<label class="span2">Lezioni apprese<textarea name="lessons" rows="2">{{ p.lessons or '' }}</textarea></label>
+<button class="btn primary span2">Salva</button></form></section>
+<section class="card"><h2>Gate e decisioni</h2>
+{% if not p.status.startswith('chiuso') %}<form method="post" action="{{ url_for('innovazione.gate', project_id=p.id) }}" class="form-grid">
+<label class="span2">Decisione al gate della fase «{{ FASI_INNOVAZIONE[p.stage][0] }}»<select name="decision">{% for k, v in DECISIONI.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+<label class="span2">Evidenze (prove, numeri, feedback dei clienti)<textarea name="evidence" rows="3"></textarea></label>
+<label class="span2">Deciso da<input name="decided_by" placeholder="Comitato innovazione"></label>
+<button class="btn primary span2">Registra la decisione</button></form>{% else %}<p class="muted">Progetto chiuso il {{ p.end_date.strftime('%d/%m/%Y') if p.end_date }}.</p>{% endif %}
+<ul class="gate-log">{% for g in p.gates|reverse %}<li class="dec-{{ g.decision }}"><b>{{ g.decided_at.strftime('%d/%m/%Y') }} · {{ DECISIONI[g.decision] }}</b><small>{{ FASI_INNOVAZIONE[g.from_stage][0] }}{% if g.to_stage and g.to_stage != g.from_stage %} → {{ FASI_INNOVAZIONE[g.to_stage][0] }}{% endif %} · {{ g.decided_by or '' }}</small><p>{{ g.evidence or '' }}</p></li>{% else %}<li class="muted">Nessuna decisione registrata.</li>{% endfor %}</ul>
+{% if p.ideas %}<h3>Idee di origine</h3>{% for i in p.ideas %}<p><b>{{ i.code }}</b> {{ i.title }} · proposta da {{ i.proposer }}</p>{% endfor %}{% endif %}
+</section></div>
+{% endblock %}

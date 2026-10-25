@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block title %}Strategia dell'innovazione{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">ISO 56001 · §5.2 POLITICA · §6.2 OBIETTIVI</p><h1>Strategia e politica dell'innovazione {{ anno }}</h1><p class="muted">Che cosa vuole ottenere l'azienda dall'innovazione, dove cerca le opportunità e con quali risorse.</p></div>
+{% include 'innovazione/_nav.html' %}
+<section class="card"><form method="post" class="form-grid iso-form"><input type="hidden" name="anno" value="{{ anno }}">
+<label class="span2">Visione dell'innovazione<textarea name="vision" rows="3" placeholder="Dove vogliamo essere tra 3-5 anni grazie all'innovazione">{{ s.vision if s else '' }}</textarea></label>
+<label class="span2">Politica dell'innovazione<textarea name="policy" rows="4" placeholder="Principi: apertura alle idee di tutti, sperimentazione, accettazione consapevole del rischio, collaborazione con clienti e partner...">{{ s.policy if s else '' }}</textarea></label>
+<label>Ambiti di ricerca delle opportunità (uno per riga)<textarea name="focus_areas" rows="6">{{ s.focus_areas if s else '' }}</textarea></label>
+<label>Obiettivi di innovazione misurabili (uno per riga)<textarea name="objectives" rows="6">{{ s.objectives if s else '' }}</textarea></label>
+<label>Budget per l'innovazione (€)<input name="budget" value="{{ ('%.0f'|format(s.budget)) if s and s.budget else '' }}"></label>
+<div></div><button class="btn primary span2">Salva la strategia</button></form></section>
+{% endblock %}

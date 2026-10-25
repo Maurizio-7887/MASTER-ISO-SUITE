@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% block title %}Attestati e nomine{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · FORMAZIONE</p><h1>Attestati conseguiti e nomine formali</h1><p class="muted">Copia del documento vero (certificato, nomina) collegata a ogni riga, con numero, data emissione e scadenza — così si vede subito cosa sta per scadere.</p><p><a href="{{ url_for('sgq.formazione') }}">← Torna ai corsi</a></p></div>
+
+<section class="card"><h2>➕ Nuovo attestato o nomina</h2>
+<form method="post" action="{{ url_for('sgq.nuovo_attestato') }}" enctype="multipart/form-data" class="form-grid">
+<select name="user_id" required><option value="">Dipendente…</option>{% for u in utenti %}<option value="{{ u.id }}">{{ u.name }}</option>{% endfor %}</select>
+<select name="kind"><option value="attestato">Attestato</option><option value="nomina">Nomina</option></select>
+<input type="text" name="title" placeholder="Titolo, es. EN ISO 9712 MT livello 2 / Coordinatore di Saldatura RWC" required class="span2">
+<input type="text" name="reference_number" placeholder="Numero certificato/riferimento">
+<input type="text" name="issuing_body" placeholder="Ente/organismo">
+<label>Data emissione<input type="date" name="issue_date"></label>
+<label>Data scadenza (se prevista)<input type="date" name="expiry_date"></label>
+<input type="text" name="notes" placeholder="Note" class="span2">
+<label class="span2">Copia del documento (PDF/immagine/Word)<input type="file" name="documento" accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"></label>
+<button class="btn primary span2">Registra</button>
+</form></section>
+
+<section class="card document-list"><h2>Elenco ({{ elenco|length }})</h2>
+{% for q in elenco %}<div class="document-row">
+<div>
+<span class="badge {{ 'non_raggiunto' if q.expiry_date and q.expiry_date < oggi else ('medio' if q.expiry_date and (q.expiry_date - oggi).days < 90 else '') }}">{{ q.kind|upper }}</span>
+<b>{{ q.user.name }}</b> — {{ q.title }}
+<p>{% if q.reference_number %}N. {{ q.reference_number }} · {% endif %}{% if q.issuing_body %}{{ q.issuing_body }} · {% endif %}{% if q.issue_date %}emesso il {{ q.issue_date.strftime('%d/%m/%Y') }}{% endif %}{% if q.expiry_date %} · scade il <b>{{ q.expiry_date.strftime('%d/%m/%Y') }}</b>{% if q.expiry_date < oggi %} <span class="alert-text">(SCADUTO)</span>{% elif (q.expiry_date - oggi).days < 90 %} <span class="alert-text">(in scadenza)</span>{% endif %}{% endif %}</p>
+</div>
+{% if q.document_id %}<a class="btn" href="{{ url_for('documents.download', document_id=q.document_id) }}" target="_blank">Apri documento</a>{% endif %}
+<form method="post" action="{{ url_for('sgq.elimina_attestato', qual_id=q.id) }}" onsubmit="return confirm('Eliminare questo attestato/nomina?');"><button class="btn danger small">Elimina</button></form>
+</div>{% else %}<p class="empty">Nessun attestato o nomina registrato.</p>{% endfor %}
+</section>
+{% endblock %}

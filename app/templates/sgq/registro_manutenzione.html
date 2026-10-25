@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Registro manutenzione{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · MANUTENZIONE</p><h1>Registro interventi</h1></div>
+<section class="card"><form method="get" class="search-row"><select name="macchina" onchange="this.form.submit()"><option value="">Tutte le macchine</option>{% for m in macchine %}<option value="{{ m.id }}" {% if m.id==machine_id %}selected{% endif %}>{{ m.code }} — {{ m.name }}</option>{% endfor %}</select></form></section>
+<section class="card"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Macchina</th><th>Tipo</th><th>Intervento</th><th>Chi</th><th>Ditta esterna</th><th>Ore</th></tr></thead><tbody>
+{% for l in log %}<tr>
+<td>{{ l.performed_at.strftime('%d/%m/%Y %H:%M') }}</td>
+<td>{{ l.machine.code }} — {{ l.machine.name }}</td>
+<td><span class="badge {{ 'completato' if l.kind=='programmata' else 'da_compilare' }}">{{ l.kind|upper }}</span></td>
+<td>{{ l.intervention }}{% if l.notes %}<br><small class="muted">{{ l.notes }}</small>{% endif %}</td>
+<td>{{ l.operator.name if l.operator else '—' }}</td>
+<td>{{ l.external_company or '—' }}</td>
+<td>{{ l.hours or '—' }}</td>
+</tr>{% else %}<tr><td colspan="7" class="empty">Nessun intervento registrato.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<a class="btn" href="{{ url_for('sgq.manutenzione') }}">← Torna a Macchine e piano</a>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% block title %}Innovazione · ISO 56000{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">GESTIONE DELL'INNOVAZIONE · ISO 56001 · ISO 56002</p><h1>Cruscotto dell'innovazione {{ anno }}</h1><p class="muted">Dalle idee ai progetti, con fasi e gate, indicatori e autovalutazione di maturità del sistema.</p></div>
+{% include 'innovazione/_nav.html' %}
+<section class="metrics iso-metrics">
+<div class="metric"><small>Idee raccolte nell'anno</small><strong>{{ k.idee_anno }}</strong><span class="muted">da {{ k.proponenti }} persone · {{ k.idee_valutate_pct }}% valutate</span></div>
+<div class="metric"><small>Progetti attivi</small><strong>{{ k.progetti_attivi }}</strong><span class="muted">successo dei chiusi: {{ (k.tasso_successo ~ '%') if k.tasso_successo is not none else '—' }}</span></div>
+<div class="metric"><small>Budget progetti attivi</small><strong>€ {{ '{:,.0f}'.format(k.budget_attivi).replace(',', '.') }}</strong><span class="muted">speso finora € {{ '{:,.0f}'.format(k.speso).replace(',', '.') }}</span></div>
+<div class="metric"><small>Beneficio annuo atteso</small><strong>€ {{ '{:,.0f}'.format(k.beneficio_atteso).replace(',', '.') }}</strong><span class="muted">rientro {{ (k.rientro_anni ~ ' anni') if k.rientro_anni else '—' }} · realizzato € {{ '{:,.0f}'.format(k.beneficio_realizzato).replace(',', '.') }}</span></div>
+<div class="metric"><small>Maturità del sistema</small><strong>{{ media if media is not none else "—" }}<small style="display:inline;font-size:15px"> / 5</small></strong><span class="muted">{{ ('ultima autovalutazione ' ~ ultima.assessed_at.strftime('%d/%m/%Y')) if ultima else 'nessuna autovalutazione' }}</span></div>
+</section>
+<div class="two-col">
+<section class="card"><h2>Progetti attivi per fase</h2><div style="height:240px"><canvas id="g-fasi"></canvas></div></section>
+<section class="card"><h2>Orizzonte e tecnologie</h2><div style="height:240px"><canvas id="g-orizzonte"></canvas></div>
+<p class="muted" style="margin-top:10px">{% for t, n in k.per_tecnologia %}<span class="badge">{{ t }} · {{ n }}</span> {% endfor %}</p></section>
+</div>
+<section class="card" style="margin-top:18px"><h2>Strategia {{ anno }}</h2>
+{% if strategia %}<div class="two-col" style="margin-top:0"><div><h3>Visione</h3><p>{{ strategia.vision or '—' }}</p><h3>Ambiti di ricerca delle opportunità</h3><ul>{% for r in (strategia.focus_areas or '').splitlines() if r.strip() %}<li>{{ r }}</li>{% endfor %}</ul></div>
+<div><h3>Obiettivi di innovazione</h3><ul>{% for r in (strategia.objectives or '').splitlines() if r.strip() %}<li>{{ r }}</li>{% endfor %}</ul></div></div>
+{% else %}<p class="empty">Strategia non ancora definita. <a href="{{ url_for('innovazione.strategia', anno=anno) }}">Definiscila ora</a>.</p>{% endif %}</section>
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script>
+new Chart(document.getElementById('g-fasi'),{type:'bar',data:{labels:{{ k.per_fase|map(attribute=0)|list|tojson }},datasets:[{data:{{ k.per_fase|map(attribute=1)|list|tojson }},backgroundColor:'#13b8d4',borderRadius:6}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+new Chart(document.getElementById('g-orizzonte'),{type:'doughnut',data:{labels:{{ k.per_orizzonte|map(attribute=0)|list|tojson }},datasets:[{data:{{ k.per_orizzonte|map(attribute=1)|list|tojson }},backgroundColor:['#173d5b','#13b8d4','#f5a524']}]},options:{maintainAspectRatio:false,plugins:{legend:{position:"right"}}}});
+</script>
+{% endblock %}

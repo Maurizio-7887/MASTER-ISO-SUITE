@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Formazione{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · FORMAZIONE</p><h1>Nuovo corso</h1><p class="muted">Crea qui il corso. Per gestirlo dopo (sessioni, partecipanti, modifiche) vai su <a href="{{ url_for('sgq.registro_formazione') }}">Registro formazione</a>.</p>
+<p><a href="{{ url_for('sgq.piano_formazione') }}">📊 Piano formazione per singola risorsa</a> · <a href="{{ url_for('sgq.registro_formazione') }}">📖 Registro formazione (corsi, sessioni, partecipanti)</a> · <a href="{{ url_for('sgq.attestati') }}">🎓 Attestati e nomine</a> · <a href="{{ url_for('sgq.polivalenza_elenco') }}">🧩 Matrici di polivalenza</a></p></div>
+
+<section class="card"><h2>➕ Nuovo corso</h2>
+<form method="post" action="{{ url_for('sgq.nuovo_corso') }}" class="form-grid">
+<input type="text" name="title" placeholder="Titolo corso *" required class="span2">
+<input type="text" name="topic_area" placeholder="Area (es. RSPP, Antincendio, Qualità, Muletti)">
+<input type="text" name="teacher" placeholder="Docente">
+<input type="date" name="start_date">
+<input type="date" name="end_date">
+<input type="text" name="hours" placeholder="Ore" inputmode="decimal">
+<input type="text" name="notes" placeholder="Note" class="span2">
+<button class="btn primary span2">Crea corso</button>
+</form></section>
+{% endblock %}

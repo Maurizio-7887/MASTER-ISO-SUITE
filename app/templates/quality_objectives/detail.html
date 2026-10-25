@@ -1,0 +1,76 @@
+{% extends 'base.html' %}{% block title %}{{ o.indicator_name }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">OBIETTIVO DI QUALITÀ — {{ o.year }}</p><h1>{{ o.indicator_name }}</h1><p class="muted">{% if o.process %}Processo: {{ o.process }}{% endif %}{% if o.frequency %} · Frequenza: {{ o.frequency }}{% endif %}</p></div>
+
+<form action="{{ url_for('quality_objectives.update', objective_id=o.id) }}" method="post">
+<section class="card"><h2>Anno {{ o.year - 1 }} (anno precedente)</h2>
+<div class="form-grid">
+<label>Preventivo<input type="text" name="py_preventivo" value="{{ o.py_preventivo or '' }}"></label>
+<label>Consuntivo<input type="text" name="py_consuntivo" value="{{ o.py_consuntivo or '' }}"></label>
+<label class="span2">Analisi risultato<input type="text" name="py_analisi" value="{{ o.py_analisi or '' }}"></label>
+</div></section>
+
+<section class="card"><h2>Anno {{ o.year }} (anno corrente)</h2>
+<div class="form-grid">
+<label>Obiettivo anno {{ o.year }}<input type="text" name="target_value" value="{{ o.target_value or '' }}"></label>
+<label>Responsabile<input type="text" name="responsible" value="{{ o.responsible or '' }}"></label>
+<label>Consuntivo trimestrale<input type="text" name="q1_consuntivo" value="{{ o.q1_consuntivo or '' }}"></label>
+<label>Consuntivo semestrale<input type="text" name="h1_consuntivo" value="{{ o.h1_consuntivo or '' }}"></label>
+<label>Consuntivo a 9 mesi<input type="text" name="ninemonths_consuntivo" value="{{ o.ninemonths_consuntivo or '' }}"></label>
+<label>Consuntivo anno in corso<input type="text" name="year_consuntivo" value="{{ o.year_consuntivo or '' }}"></label>
+<label class="span2">Analisi risultato<input type="text" name="year_analisi" value="{{ o.year_analisi or '' }}"></label>
+<label>Stato<select name="status"><option value="in_corso" {% if o.status=='in_corso' %}selected{% endif %}>In corso</option><option value="raggiunto" {% if o.status=='raggiunto' %}selected{% endif %}>Raggiunto</option><option value="non_raggiunto" {% if o.status=='non_raggiunto' %}selected{% endif %}>Non raggiunto</option></select></label>
+<label class="span2">Note<input type="text" name="notes" value="{{ o.notes or '' }}"></label>
+<label class="span2">Coerenza con la Politica della Qualità<input type="text" name="policy_alignment" value="{{ o.policy_alignment or '' }}" placeholder="Quale impegno della Politica supporta questo obiettivo"></label>
+</div>
+<button class="btn primary" style="margin-top:12px">Salva consuntivazione</button>
+</section>
+</form>
+
+<form action="{{ url_for('quality_objectives.delete', objective_id=o.id) }}" method="post" onsubmit="return confirm('Eliminare definitivamente questo obiettivo, con tutte le azioni e i rischi collegati?');"><button class="btn danger">Elimina obiettivo</button></form>
+
+<section class="card"><h2>Azioni pianificate</h2>
+<form action="{{ url_for('quality_objectives.add_action', objective_id=o.id) }}" method="post" class="form-grid">
+<input type="text" name="description" placeholder="Descrizione azione" required class="span2">
+<input type="text" name="responsible" placeholder="Responsabile">
+<input type="date" name="due_date">
+<button class="btn primary span2">Aggiungi azione</button>
+</form>
+<div class="compact-list">
+{% for a in o.actions %}<div>
+<b>{{ a.description }}</b> <span class="badge {{ a.status }}">{{ a.status.replace('_',' ')|upper }}</span>
+<small>{% if a.responsible %}Responsabile: {{ a.responsible }} · {% endif %}{% if a.due_date %}Scadenza: {{ a.due_date.strftime('%d/%m/%Y') }}{% if a.due_date < oggi and a.status!='completata' %} <span class="alert-text">(scaduta)</span>{% endif %}{% endif %}</small>
+<form action="{{ url_for('quality_objectives.update_action', action_id=a.id) }}" method="post" class="inline-form" style="margin-top:6px">
+<select name="status" onchange="this.form.submit()"><option value="da_avviare" {% if a.status=='da_avviare' %}selected{% endif %}>Da avviare</option><option value="in_corso" {% if a.status=='in_corso' %}selected{% endif %}>In corso</option><option value="completata" {% if a.status=='completata' %}selected{% endif %}>Completata</option></select>
+</form>
+</div>{% else %}<p class="empty">Nessuna azione pianificata.</p>{% endfor %}
+</div>
+</section>
+
+<section class="card"><h2>Analisi dei rischi e opportunità (Probabilità × Impatto)</h2>
+<p class="muted">Punteggio 1-25: <span class="badge basso">1-7 basso</span> <span class="badge medio">8-14 medio</span> <span class="badge alto">15-25 alto</span></p>
+<form action="{{ url_for('quality_objectives.add_risk', objective_id=o.id) }}" method="post" class="form-grid">
+<select name="kind"><option value="rischio">Rischio</option><option value="opportunita">Opportunità</option></select>
+<input type="text" name="description" placeholder="Descrizione" required class="span2">
+<label>Probabilità (1-5)<select name="probability">{% for n in range(1,6) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}</select></label>
+<label>Impatto (1-5)<select name="impact">{% for n in range(1,6) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}</select></label>
+<input type="text" name="mitigation" placeholder="Azione mitigatoria" class="span2">
+<button class="btn primary span2">Aggiungi al registro</button>
+</form>
+<div class="compact-list">
+{% for r in o.risks %}<div>
+<span class="badge {{ r.kind }}">{{ 'RISCHIO' if r.kind=='rischio' else 'OPPORTUNITÀ' }}</span>
+<span class="badge {{ r.livello }}">Punteggio {{ r.score }} — {{ r.livello|upper }}</span>
+<span class="badge {{ r.status }}">{{ r.status|upper }}</span>
+<p>{{ r.description }}</p>
+{% if r.mitigation %}<p class="muted">Mitigazione: {{ r.mitigation }}</p>{% endif %}
+<small>Probabilità {{ r.probability }} × Impatto {{ r.impact }}</small>
+<form action="{{ url_for('quality_objectives.update_risk', risk_id=r.id) }}" method="post" class="inline-form" style="margin-top:6px">
+<input type="text" name="mitigation" value="{{ r.mitigation or '' }}" placeholder="Aggiorna mitigazione">
+<select name="status" onchange="this.form.submit()"><option value="aperto" {% if r.status=='aperto' %}selected{% endif %}>Aperto</option><option value="mitigato" {% if r.status=='mitigato' %}selected{% endif %}>Mitigato</option><option value="chiuso" {% if r.status=='chiuso' %}selected{% endif %}>Chiuso</option></select>
+<button class="btn">Salva</button>
+</form>
+</div>{% else %}<p class="empty">Nessun rischio/opportunità registrato per questo obiettivo.</p>{% endfor %}
+</div>
+</section>
+<p><a href="{{ url_for('quality_objectives.index', anno=o.year) }}">← Torna agli obiettivi {{ o.year }}</a></p>
+{% endblock %}

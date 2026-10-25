@@ -1,0 +1,30 @@
+{% extends 'base.html' %}{% block title %}Risorse{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">ANAGRAFICA</p><h1>Risorse</h1><p class="muted">Le persone che accedono al programma: da qui si aggiungono nuovi operai (nome + PIN), si corregge un PIN sbagliato, o si disattiva chi non lavora più senza cancellarne la storia.</p></div>
+
+<section class="card"><h2>➕ Nuova persona</h2>
+<form method="post" action="{{ url_for('risorse.nuova_persona') }}" class="form-grid">
+<label>Nome e cognome<input type="text" name="name" required placeholder="es. Mario Rossi"></label>
+<label>PIN di accesso<input type="text" name="pin" required placeholder="es. 1911" inputmode="numeric"></label>
+<label>Ruolo<select name="role"><option value="operator">Operatore</option><option value="owner">Amministratore (accesso completo)</option></select></label>
+<button class="btn primary span2">Aggiungi</button>
+</form></section>
+
+<section class="card"><h2>Persone registrate ({{ persone|length }})</h2>
+<div class="table-wrap"><table><thead><tr><th>Nome</th><th>PIN</th><th>Ruolo</th><th>Stato</th><th>Azioni</th></tr></thead><tbody>
+{% for p in persone %}<tr {% if not p.active %}style="opacity:.55"{% endif %}>
+<td colspan="5">
+<form method="post" action="{{ url_for('risorse.modifica_persona', user_id=p.id) }}" class="inline-form">
+<input type="text" name="name" value="{{ p.name }}" style="max-width:220px" required>
+<input type="text" name="pin" value="{{ p.pin }}" style="max-width:110px" required inputmode="numeric">
+<select name="role" style="max-width:220px"><option value="operator" {% if p.role=='operator' %}selected{% endif %}>Operatore</option><option value="owner" {% if p.role=='owner' %}selected{% endif %}>Amministratore</option></select>
+<span class="badge {{ 'live' if p.active else '' }}">{{ 'Attivo' if p.active else 'Disattivato' }}</span>
+<button class="btn small primary">Salva</button>
+</form>
+<form method="post" action="{{ url_for('risorse.attiva_disattiva_persona', user_id=p.id) }}" style="display:inline" onsubmit="return confirm('{{ 'Disattivare' if p.active else 'Riattivare' }} {{ p.name }}?');">
+<button class="btn small {{ 'danger' if p.active else '' }}" {% if p.id == current_user.id %}disabled title="Non puoi disattivare il tuo stesso account"{% endif %}>{{ 'Disattiva' if p.active else 'Riattiva' }}</button>
+</form>
+</td>
+</tr>{% endfor %}
+</tbody></table></div>
+</section>
+{% endblock %}

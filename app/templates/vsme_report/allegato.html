@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Allegato al Bilancio — Relazione sulla Sostenibilità VSME ESRS {{ anno }}</title>
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<style>
+:root{
+  --verde:#1f6f4a; --verde-chiaro:#eaf5ef;
+  --viola:#5b3f8c; --viola-chiaro:#f1ecf9;
+  --arancio:#c1591a; --arancio-chiaro:#fbeee3;
+  --grigio:#5b6572; --testo:#20262b; --bordo:#e2e6ea;
+}
+*{box-sizing:border-box}
+body{font-family:"Segoe UI",Arial,sans-serif;color:var(--testo);margin:0;background:#f4f5f6;line-height:1.5}
+.pagina{max-width:980px;margin:0 auto;background:#fff;padding:56px 64px}
+.toolbar{position:sticky;top:0;background:#20262b;color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+.toolbar button{background:var(--verde);color:#fff;border:0;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer}
+.toolbar span{font-size:.9em;opacity:.8}
+
+/* Copertina */
+.copertina{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;color:#fff;
+  background:linear-gradient(135deg,#123d2b 0%,var(--verde) 55%,#2c5f8a 100%);padding:64px}
+.copertina .eyebrow{letter-spacing:.14em;font-weight:700;font-size:.85em;opacity:.9;text-transform:uppercase}
+.copertina h1{font-size:3em;margin:.3em 0;line-height:1.1}
+.copertina .badge-standard{display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:999px;padding:6px 16px;font-size:.85em;margin-top:10px}
+.copertina .footer-cop{font-size:.9em;opacity:.85}
+
+/* Indice */
+.indice h2{color:var(--verde)}
+.indice-voce{display:flex;justify-content:space-between;border-bottom:1px solid var(--bordo);padding:10px 0;font-weight:600}
+.indice-sotto{display:flex;justify-content:space-between;padding:6px 0 6px 22px;color:var(--grigio);font-size:.95em}
+
+/* Capitoli a tema */
+.capitolo{page-break-before:always;padding-top:20px}
+.capitolo .kicker{font-weight:700;letter-spacing:.08em;font-size:.8em;text-transform:uppercase}
+.capitolo h1{font-size:2.1em;margin:.15em 0 .6em}
+.tema-base .kicker,.tema-base h1{color:var(--verde)}
+.tema-narrativo .kicker,.tema-narrativo h1{color:var(--viola)}
+.tema-bp .kicker,.tema-bp h1{color:var(--arancio)}
+
+.stat-box{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0}
+.stat-box .box{background:var(--verde-chiaro);border-radius:10px;padding:16px}
+.stat-box .box strong{display:block;font-size:1.7em;color:var(--verde)}
+.stat-box .box small{color:var(--grigio)}
+
+.modulo-card{border:1px solid var(--bordo);border-radius:10px;padding:20px 22px;margin:18px 0;break-inside:avoid}
+.modulo-card h3{margin:0 0 4px;font-size:1.15em}
+.tema-base .modulo-card h3{color:var(--verde)}
+.tema-narrativo .modulo-card h3{color:var(--viola)}
+.tema-bp .modulo-card h3{color:var(--arancio)}
+.modulo-card .codice-tag{display:inline-block;background:var(--grigio);color:#fff;border-radius:5px;padding:1px 8px;font-size:.75em;font-weight:700;margin-right:8px}
+.modulo-card .avanzamento{float:right;font-size:.85em;color:var(--grigio)}
+
+.voce{border-top:1px solid var(--bordo);padding:12px 0}
+.voce:first-of-type{border-top:0}
+.voce .nome{font-weight:600}
+.voce .unita{color:var(--grigio);font-size:.9em}
+.voce .valore{margin-top:4px}
+.voce .valore.vuoto{color:#b23b3b;font-style:italic}
+.voce .note{color:var(--grigio);font-size:.9em;margin-top:2px}
+.badge-stato{display:inline-block;border-radius:5px;padding:1px 8px;font-size:.72em;font-weight:700;margin-left:8px;vertical-align:middle}
+.badge-stato.completato{background:#dcefe3;color:#1f6f4a}
+.badge-stato.non_applicabile{background:#eee;color:#666}
+.badge-stato.da_compilare{background:#fbe4e4;color:#a23b3b}
+
+.chart-wrap{max-width:520px;margin:18px auto}
+.chart-wrap.small{max-width:360px}
+.due-colonne{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+
+.nota-metodologica{background:#f8f9fa;border-radius:10px;padding:22px 26px;margin-top:30px;font-size:.95em;color:#3a4148}
+
+table.indice-finale{width:100%;border-collapse:collapse;margin-top:14px;font-size:.88em}
+table.indice-finale th{background:#20262b;color:#fff;text-align:left;padding:8px 10px}
+table.indice-finale td{padding:7px 10px;border-bottom:1px solid var(--bordo)}
+table.indice-finale tr:nth-child(even) td{background:#fafbfc}
+
+.chiusura{page-break-before:always;min-height:70vh;display:flex;flex-direction:column;justify-content:center;
+  background:linear-gradient(135deg,var(--arancio) 0%,#8c3a10 100%);color:#fff;padding:64px;text-align:left}
+.chiusura h2{font-size:1.8em;max-width:640px;line-height:1.35}
+
+@media print{
+  body{background:#fff}
+  .toolbar{display:none}
+  .pagina{padding:0;max-width:none}
+  .copertina,.chiusura{min-height:100vh}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span>Anteprima Allegato al Bilancio — usa "Stampa" del browser per esportare in PDF</span>
+  <button onclick="window.print()">Stampa / Esporta PDF</button>
+</div>
+
+<div class="pagina">
+
+<!-- COPERTINA -->
+<section class="copertina">
+  <div>
+    <p class="eyebrow">{{ config.RAGIONE_SOCIALE }}</p>
+    <h1>Bilancio di<br>Sostenibilità</h1>
+    <span class="badge-standard">VSME ESRS COMPLIANT — Standard EFRAG, gennaio 2024</span>
+  </div>
+  <div class="footer-cop">
+    <p>Allegato al Bilancio d'esercizio {{ anno }}<br>
+    {{ config.SEDE_LEGALE }}</p>
+    <p>Documento generato il {{ data_generazione.strftime('%d/%m/%Y') }} — indicatori compilati: {{ totale_completati }} / {{ totale_voci }}</p>
+  </div>
+</section>
+
+<!-- INDICE -->
+<section class="indice" style="padding-top:50px">
+  <p class="eyebrow" style="color:var(--grigio);letter-spacing:.12em;font-weight:700">RELAZIONE SULLA SOSTENIBILITÀ VSME ESRS</p>
+  <h2>Indice</h2>
+  <div class="indice-voce"><span>8.1&nbsp;&nbsp;Modulo Base — Informative e metriche B1-B12</span><span>Ambiente, persone, condotta d'impresa</span></div>
+  {% for m in moduli_base %}<div class="indice-sotto"><span>{{ m.codice }} — {{ m.nome }}</span><span>{{ m.completati }}/{{ m.totale }}</span></div>{% endfor %}
+  {% if moduli_narrativi %}
+  <div class="indice-voce"><span>8.2&nbsp;&nbsp;Approfondimento facoltativo — Informative N1-N5</span><span>Politiche, azioni, obiettivi</span></div>
+  {% for m in moduli_narrativi %}<div class="indice-sotto"><span>{{ m.codice }} — {{ m.nome }}</span><span>{{ m.completati }}/{{ m.totale }}</span></div>{% endfor %}
+  {% endif %}
+  {% if moduli_bp %}
+  <div class="indice-voce"><span>8.3&nbsp;&nbsp;Approfondimento facoltativo — Informative BP1-BP11</span><span>Investitori, finanziatori, catena del valore</span></div>
+  {% for m in moduli_bp %}<div class="indice-sotto"><span>{{ m.codice }} — {{ m.nome }}</span><span>{{ m.completati }}/{{ m.totale }}</span></div>{% endfor %}
+  {% endif %}
+
+  <p style="margin-top:30px;color:var(--grigio)">La presente sezione è redatta sulla base dello Standard Europeo di Rendicontazione di
+  Sostenibilità per le PMI non quotate (VSME ESRS), pubblicato da EFRAG nel gennaio 2024,
+  su base volontaria. La numerazione dei paragrafi segue quella prevista dallo standard, per
+  agevolarne la lettura e il confronto con altre relazioni redatte secondo lo stesso schema.
+  Il capitolo 8.1 (Modulo Base) costituisce di per sé la dichiarazione volontaria completa.
+  {% if moduli_narrativi or moduli_bp %}I capitoli 8.2 e 8.3 sono approfondimenti facoltativi,
+  inclusi in questo documento perché già richiesti da una banca, un finanziatore o un grande
+  cliente/capogruppo della filiera — non sono un requisito dello standard per la sola
+  dichiarazione di base.{% endif %}</p>
+</section>
+
+<!-- 8.1 MODULO BASE -->
+<section class="capitolo tema-base">
+  <p class="kicker">8.1 — Modulo Base</p>
+  <h1>Informative e metriche B1–B12</h1>
+  <p>Attraverso questo modulo l'organizzazione riferisce in merito alle proprie questioni
+  ambientali, sociali e di condotta d'impresa, secondo la struttura prevista dallo Standard
+  VSME ESRS.</p>
+
+  <h2 style="color:var(--verde);margin-top:34px">Indicatori di processo tracciati dal sistema</h2>
+  <p style="color:var(--grigio)">A supporto delle informative sulla forza lavoro e sulla qualità (in particolare B9, B10, N3),
+  questi dati sono calcolati automaticamente dal programma per l'anno {{ anno }} e non richiedono compilazione manuale.</p>
+
+  <div class="stat-box">
+    <div class="box"><strong>{{ dati_vivi.dipendenti_attivi }}</strong><small>Dipendenti/operatori attivi</small></div>
+    <div class="box"><strong>{{ dati_vivi.ore_registrate }}</strong><small>Ore di formazione erogate {{ anno }}</small></div>
+    <div class="box"><strong>{{ dati_vivi.controlli_totali }}</strong><small>Non conformità registrate</small></div>
+    <div class="box"><strong>{{ dati_vivi.controlli_non_conformi }}</strong><small>di cui ancora aperte</small></div>
+  </div>
+
+  <div class="due-colonne">
+    <div>
+      <p style="text-align:center;font-weight:600">Non conformità: aperte e chiuse</p>
+      <div class="chart-wrap small"><canvas id="grafico-controlli"></canvas></div>
+    </div>
+    <div>
+      <p style="text-align:center;font-weight:600">Rischi per livello (probabilità × impatto)</p>
+      <div class="chart-wrap small"><canvas id="grafico-rischi"></canvas></div>
+    </div>
+  </div>
+
+  {% if dati_vivi.obiettivi_totali > 0 %}
+  <p style="text-align:center;font-weight:600;margin-top:24px">Obiettivi di qualità {{ anno }} — stato di avanzamento</p>
+  <div class="chart-wrap small"><canvas id="grafico-obiettivi"></canvas></div>
+  {% endif %}
+
+  {% if grafici_manuali.emissioni_scope %}
+  <p style="text-align:center;font-weight:600;margin-top:30px">B3 — Emissioni di gas a effetto serra per ambito ({{ grafici_manuali.emissioni_scope.unita }})</p>
+  <div class="chart-wrap"><canvas id="grafico-scope"></canvas></div>
+  {% endif %}
+
+  {% if grafici_manuali.rifiuti %}
+  <p style="text-align:center;font-weight:600;margin-top:30px">B7 — Rifiuti pericolosi e non pericolosi ({{ grafici_manuali.rifiuti.unita }})</p>
+  <div class="chart-wrap small"><canvas id="grafico-rifiuti"></canvas></div>
+  {% endif %}
+
+  <h2 style="color:var(--verde);margin-top:40px">Indicatori compilati</h2>
+  {% for m in moduli_base %}
+  <div class="modulo-card">
+    <span class="codice-tag">{{ m.codice }}</span><h3 style="display:inline">{{ m.nome }}</h3>
+    <span class="avanzamento">{{ m.completati }}/{{ m.totale }} compilati</span>
+    {% for v in m.voci %}
+    <div class="voce">
+      <span class="nome">{{ v.indicator_name }}</span>{% if v.unit %} <span class="unita">({{ v.unit }})</span>{% endif %}
+      <span class="badge-stato {{ v.status }}">{{ v.status.replace('_',' ')|upper }}</span>
+      {% if v.value %}<div class="valore">{{ v.value }}</div>
+      {% else %}<div class="valore vuoto">Dato non ancora compilato nel registro VSME.</div>{% endif %}
+      {% if v.notes %}<div class="note">{{ v.notes }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</section>
+
+{% if moduli_narrativi %}
+<!-- 8.2 APPROFONDIMENTO FACOLTATIVO — NARRATIVO-PAT -->
+<section class="capitolo tema-narrativo">
+  <p class="kicker">8.2 — Approfondimento facoltativo</p>
+  <h1>Politiche, azioni e obiettivi — Informative N1–N5</h1>
+  <p><span class="badge-stato completato" style="margin-left:0">SOLO SU RICHIESTA</span></p>
+  <p>Questo modulo raccoglie in forma narrativa il modello di business, i temi di sostenibilità
+  ritenuti rilevanti, le politiche e le azioni messe in campo, la mappa degli stakeholder e la
+  governance delle questioni di sostenibilità. Non fa parte del nucleo minimo dello Standard
+  VSME: è incluso in questo Allegato perché richiesto da una banca, un finanziatore o un grande
+  cliente/capogruppo della filiera.</p>
+
+  {% for m in moduli_narrativi %}
+  <div class="modulo-card">
+    <span class="codice-tag">{{ m.codice }}</span><h3 style="display:inline">{{ m.nome }}</h3>
+    <span class="avanzamento">{{ m.completati }}/{{ m.totale }} compilati</span>
+    {% for v in m.voci %}
+    <div class="voce">
+      <span class="nome">{{ v.indicator_name }}</span>
+      <span class="badge-stato {{ v.status }}">{{ v.status.replace('_',' ')|upper }}</span>
+      {% if v.value %}<div class="valore">{{ v.value }}</div>
+      {% else %}<div class="valore vuoto">Testo da redigere a cura della Direzione.</div>{% endif %}
+      {% if v.description %}<div class="note">{{ v.description }}</div>{% endif %}
+      {% if v.notes %}<div class="note">{{ v.notes }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if moduli_bp %}
+<!-- 8.3 APPROFONDIMENTO FACOLTATIVO — PARTNER COMMERCIALI -->
+<section class="capitolo tema-bp">
+  <p class="kicker">8.3 — Approfondimento facoltativo</p>
+  <h1>Dati per Partner Commerciali — Informative BP1–BP11</h1>
+  <p><span class="badge-stato completato" style="margin-left:0">SOLO SU RICHIESTA</span></p>
+  <p>Questo modulo fornisce le informazioni generalmente richieste dai soggetti della catena
+  del valore aziendale, dagli investitori e dai finanziatori dell'impresa con riferimento agli
+  aspetti di sostenibilità. Non fa parte del nucleo minimo dello Standard VSME: è incluso in
+  questo Allegato perché richiesto da una banca, un investitore o un grande cliente/capogruppo
+  della filiera soggetta a CSRD.</p>
+
+  {% for m in moduli_bp %}
+  <div class="modulo-card">
+    <span class="codice-tag">{{ m.codice }}</span><h3 style="display:inline">{{ m.nome }}</h3>
+    <span class="avanzamento">{{ m.completati }}/{{ m.totale }} compilati</span>
+    {% for v in m.voci %}
+    <div class="voce">
+      <span class="nome">{{ v.indicator_name }}</span>{% if v.unit %} <span class="unita">({{ v.unit }})</span>{% endif %}
+      <span class="badge-stato {{ v.status }}">{{ v.status.replace('_',' ')|upper }}</span>
+      {% if v.value %}<div class="valore">{{ v.value }}</div>
+      {% else %}<div class="valore vuoto">Dato non ancora compilato nel registro VSME.</div>{% endif %}
+      {% if v.description %}<div class="note">{{ v.description }}</div>{% endif %}
+      {% if v.notes %}<div class="note">{{ v.notes }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<!-- NOTA METODOLOGICA E INDICE FINALE — sempre presenti -->
+<section class="capitolo tema-bp">
+  <p class="kicker">Nota metodologica</p>
+  <h1>Struttura del documento e perimetro di rendicontazione</h1>
+
+  <div class="nota-metodologica">
+    <h3 style="margin-top:0">Nota metodologica</h3>
+    <p>Il presente Allegato al Bilancio è redatto secondo lo Standard Europeo di Rendicontazione
+    di Sostenibilità per le PMI non quotate (VSME ESRS), pubblicato da EFRAG nel gennaio 2024,
+    su base volontaria. Il capitolo 8.1 (Modulo Base) costituisce da solo la dichiarazione
+    volontaria completa richiesta dallo standard.
+    {% if moduli_narrativi or moduli_bp %}I capitoli 8.2 (Narrativo-PAT) e/o 8.3 (Partner
+    Commerciali), se presenti in questo documento, sono approfondimenti facoltativi: sono stati
+    compilati perché già richiesti da una banca, un finanziatore o un grande cliente/capogruppo
+    della filiera, e non perché imposti dallo standard per la sola dichiarazione di base.
+    {% else %}I moduli facoltativi Narrativo-PAT e Partner Commerciali non risultano compilati:
+    non sono richiesti per la dichiarazione volontaria di base e vanno predisposti solo se
+    richiesti da una banca, un finanziatore o un grande cliente della filiera.{% endif %}</p>
+    <p>Periodo di rendicontazione: dal 1° gennaio al 31 dicembre {{ anno }}. Perimetro di
+    rendicontazione: {{ config.RAGIONE_SOCIALE }}, {{ config.SEDE_LEGALE }}.</p>
+    <p>Gli indicatori di processo (non conformità, obiettivi, rischi, ore di formazione)
+    sono estratti automaticamente dal software gestionale interno MasterWork Quality. I restanti
+    indicatori sono compilati e validati dalla Direzione nel Registro Indicatori VSME del
+    programma.</p>
+    <p>Indicatori totali: {{ totale_voci }} — di cui compilati o dichiarati non applicabili: {{ totale_completati }}.</p>
+  </div>
+
+  <h2 style="margin-top:40px">Indice VSME</h2>
+  <table class="indice-finale">
+    <thead><tr><th>Modulo</th><th>Pillar</th><th>Indicatore</th><th>Stato</th><th>Valore</th></tr></thead>
+    <tbody>
+    {% for m in moduli_tutti %}{% for v in m.voci %}
+      <tr>
+        <td>{{ m.codice }}</td>
+        <td>{{ m.pillar }}</td>
+        <td>{{ v.indicator_name }}</td>
+        <td>{{ v.status.replace('_',' ')|upper }}</td>
+        <td>{{ v.value or '—' }}</td>
+      </tr>
+    {% endfor %}{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- CHIUSURA -->
+<section class="chiusura">
+  <p class="eyebrow" style="letter-spacing:.12em;opacity:.85">{{ config.RAGIONE_SOCIALE }}</p>
+  <h2>Allegato al Bilancio di esercizio {{ anno }} — Relazione sulla Sostenibilità VSME ESRS.<br>
+  Documento generato automaticamente dal programma il {{ data_generazione.strftime('%d/%m/%Y') }}.</h2>
+</section>
+
+</div>
+
+<script>
+const coloriBase = ['#1f6f4a', '#c1591a', '#5b3f8c', '#8ea8b8', '#a23b3b'];
+
+function grafico(idCanvas, tipo, labels, data, colori) {
+  const el = document.getElementById(idCanvas);
+  if (!el) return;
+  new Chart(el, {
+    type: tipo,
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: colori || coloriBase }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: tipo === 'bar' ? { y: { beginAtZero: true } } : undefined
+    }
+  });
+}
+
+{% set esiti = dati_vivi.controlli_per_esito %}
+{% if esiti %}
+grafico('grafico-controlli', 'doughnut',
+  {{ esiti.keys()|list|tojson }}, {{ esiti.values()|list|tojson }},
+  ['#1f6f4a', '#a23b3b', '#c1591a']);
+{% endif %}
+
+{% set rl = dati_vivi.rischi_per_livello %}
+{% if rl %}
+grafico('grafico-rischi', 'doughnut',
+  {{ rl.keys()|list|tojson }}, {{ rl.values()|list|tojson }},
+  ['#a23b3b', '#c1591a', '#1f6f4a']);
+{% endif %}
+
+{% set ob = dati_vivi.obiettivi_per_stato %}
+{% if ob %}
+grafico('grafico-obiettivi', 'bar', {{ ob.keys()|list|tojson }}, {{ ob.values()|list|tojson }});
+{% endif %}
+
+{% if grafici_manuali.emissioni_scope %}
+grafico('grafico-scope', 'bar',
+  {{ grafici_manuali.emissioni_scope.labels|tojson }},
+  {{ grafici_manuali.emissioni_scope.data|tojson }});
+{% endif %}
+
+{% if grafici_manuali.rifiuti %}
+grafico('grafico-rifiuti', 'doughnut',
+  {{ grafici_manuali.rifiuti.labels|tojson }},
+  {{ grafici_manuali.rifiuti.data|tojson }},
+  ['#a23b3b', '#1f6f4a']);
+{% endif %}
+</script>
+</body>
+</html>

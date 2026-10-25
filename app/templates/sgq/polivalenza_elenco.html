@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Matrici di polivalenza{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · FORMAZIONE</p><h1>Matrici di polivalenza</h1><p class="muted">Una matrice per Business Unit (es. Carpenteria, Saldatura robot): righe i dipendenti, colonne le mansioni/postazioni, livello di polivalenza per ognuno.</p><p><a href="{{ url_for('sgq.formazione') }}">← Torna ai corsi</a></p></div>
+
+<section class="card"><h2>➕ Nuova matrice</h2>
+<form method="post" action="{{ url_for('sgq.nuova_matrice_polivalenza') }}" class="inline-form">
+<input type="text" name="business_unit" placeholder="Business Unit, es. Saldatura robot" required>
+<button class="btn primary">Crea matrice</button>
+</form></section>
+
+<section class="card document-list"><h2>Matrici esistenti</h2>
+{% for m in matrici %}<div class="document-row">
+<div><b>{{ m.business_unit }}</b><small>{{ m.columns|length }} colonne</small></div>
+<a class="btn" href="{{ url_for('sgq.polivalenza_dettaglio', matrix_id=m.id) }}">Apri</a>
+<form method="post" action="{{ url_for('sgq.elimina_matrice_polivalenza', matrix_id=m.id) }}" onsubmit="return confirm('Eliminare la matrice {{ m.business_unit }} e tutti i suoi dati?');"><button class="btn danger small">Elimina</button></form>
+</div>{% else %}<p class="empty">Nessuna matrice creata. Creane una sopra.</p>{% endfor %}
+</section>
+{% endblock %}

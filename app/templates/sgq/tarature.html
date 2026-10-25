@@ -1,0 +1,52 @@
+{% extends 'base.html' %}{% block title %}Tarature{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · TARATURE</p><h1>Registro generale dispositivi</h1><p class="muted">Strumenti di misura soggetti a taratura/collaudo periodico, con storico dei controlli fatti.</p></div>
+
+<section class="card"><h2>➕ Nuovo strumento</h2>
+<form method="post" action="{{ url_for('sgq.nuovo_dispositivo') }}" class="form-grid">
+<input type="text" name="sheet_number" placeholder="N. scheda">
+<input type="text" name="name" placeholder="Denominazione (es. Calibro) *" required class="span2">
+<input type="text" name="code" placeholder="Costruttore/matricola">
+<input type="text" name="assigned_to" placeholder="In gestione a">
+<input type="text" name="frequency" placeholder="Frequenza (es. Annuale)">
+<input type="date" name="last_check">
+<input type="date" name="next_due">
+<input type="text" name="supplier" placeholder="Fornitore/ente taratura">
+<input type="text" name="notes" placeholder="Note" class="span2">
+<button class="btn primary span2">Aggiungi strumento</button>
+</form></section>
+
+<section class="card"><div class="table-wrap"><table><thead><tr><th>Scheda</th><th>Strumento</th><th>In gestione a</th><th>Frequenza</th><th>Scadenza</th><th>Aggiorna</th><th>Registra controllo</th><th></th></tr></thead><tbody>
+{% for d in dispositivi %}
+<tr {% if not d.active %}style="opacity:.5"{% elif d.next_due and d.next_due < oggi %}style="background:#fdeaea"{% endif %}>
+<td>{{ d.sheet_number or '—' }}</td>
+<td><b>{{ d.name }}</b>{% if d.code %}<br><small class="muted">{{ d.code }}</small>{% endif %}</td>
+<td>{{ d.assigned_to or '—' }}</td>
+<td>{{ d.frequency or '—' }}</td>
+<td>{{ d.next_due.strftime('%d/%m/%Y') if d.next_due else '—' }}{% if d.next_due and d.next_due < oggi and d.active %} <span class="badge da_compilare">SCADUTA</span>{% endif %}</td>
+<td>
+<form method="post" action="{{ url_for('sgq.salva_dispositivo', device_id=d.id) }}" class="inline-form" style="flex-direction:column;align-items:stretch;gap:4px;min-width:160px">
+<input type="text" name="name" value="{{ d.name }}" placeholder="Nome">
+<input type="text" name="code" value="{{ d.code or '' }}" placeholder="Costruttore/matricola">
+<input type="text" name="sheet_number" value="{{ d.sheet_number or '' }}" placeholder="N. scheda">
+<input type="text" name="assigned_to" value="{{ d.assigned_to or '' }}" placeholder="In gestione a">
+<input type="text" name="frequency" value="{{ d.frequency or '' }}" placeholder="Frequenza">
+<input type="date" name="last_check" value="{{ d.last_check.isoformat() if d.last_check else '' }}">
+<input type="date" name="next_due" value="{{ d.next_due.isoformat() if d.next_due else '' }}">
+<label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" name="active" style="width:auto" {% if d.active %}checked{% endif %}> Attivo</label>
+<button class="btn small primary">Salva</button>
+</form>
+</td>
+<td>
+<form method="post" action="{{ url_for('sgq.registra_controllo', device_id=d.id) }}" class="inline-form" style="flex-direction:column;align-items:stretch;gap:4px;min-width:150px">
+<input type="date" name="checked_at" placeholder="Data controllo">
+<input type="date" name="next_due" placeholder="Nuova scadenza">
+<input type="text" name="outcome" placeholder="Esito">
+<input type="text" name="responsible" placeholder="Chi">
+<button class="btn small success">✅ Registra</button>
+</form>
+</td>
+<td><form method="post" action="{{ url_for('sgq.elimina_dispositivo', device_id=d.id) }}" onsubmit="return confirm('Eliminare {{ d.name }} e lo storico controlli collegato?');"><button class="btn small">🗑</button></form></td>
+</tr>
+{% else %}<tr><td colspan="8" class="empty">Nessuno strumento censito.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

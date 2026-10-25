@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}Storico revisioni{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">STORICO REVISIONI</p><h1>{{ corrente.document_title or corrente.original_name }}</h1><p class="muted">{{ corrente.category }}</p></div>
+<section class="card document-list">
+{% for d in catena %}<div class="document-row">
+<div><b>{{ d.revision_label or ('Versione del ' + d.uploaded_at.strftime('%d/%m/%Y')) }}</b>{% if d.is_current %} <span class="badge">VERSIONE CORRENTE</span>{% endif %}
+<small>Caricato il {{ d.uploaded_at.strftime('%d/%m/%Y %H:%M') }} da {{ d.uploaded_by.name }} — {{ d.original_name }}</small></div>
+<div class="document-actions">
+<a class="btn" href="{{ url_for('documents.download', document_id=d.id) }}">Apri file</a>
+{% if current_user.is_owner %}<form action="{{ url_for('documents.delete', document_id=d.id) }}" method="post" onsubmit="return confirm('Eliminare definitivamente questa revisione? L\'operazione non è reversibile.');"><button class="btn danger">Elimina</button></form>{% endif %}
+</div>
+</div>{% endfor %}
+</section>
+<p><a href="{{ url_for('documents.index') }}">← Torna all'archivio</a></p>
+{% endblock %}

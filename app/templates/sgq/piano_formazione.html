@@ -1,0 +1,39 @@
+{% extends 'base.html' %}{% block title %}Piano formazione per risorsa{% endblock %}{% block content %}
+<style>
+.pf-wrap{overflow-x:auto}
+.pf-table{border-collapse:collapse;font-size:12px;white-space:nowrap}
+.pf-table th,.pf-table td{padding:4px 5px;border:1px solid var(--line);text-align:center}
+.pf-table th{background:#f6f8fa;font-size:10px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);font-weight:800;writing-mode:vertical-rl;transform:rotate(180deg);height:110px;padding:6px 3px;white-space:normal;max-width:26px}
+.pf-table th.pf-fisso{writing-mode:horizontal-tb;transform:none;height:auto;white-space:nowrap;max-width:none;text-align:left;vertical-align:bottom}
+.pf-table td.pf-persona,.pf-table th:first-child{position:sticky;left:0;background:#fff;z-index:2}
+.pf-table th:first-child{background:#f6f8fa;z-index:3}
+.pf-table td.pf-persona{text-align:left;font-weight:800;white-space:nowrap}
+.pf-table input[type=text]{width:90px;height:26px;padding:2px 5px;font-size:11px}
+.pf-table input[type=date]{width:118px;height:26px;padding:1px 3px;font-size:11px}
+.pf-ok{color:#13734b;font-weight:800}
+.pf-pian{color:#0a5ecb;font-weight:800}
+.pf-riga-btn{height:26px;padding:0 8px;font-size:11px}
+</style>
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · FORMAZIONE</p><h1>Piano formazione — registro corsi per singola risorsa</h1><p class="muted">Le celle si calcolano da sole dai corsi registrati. Per correggere a mano, scrivi la data in cui il corso è stato pianificato o eseguito: il colore (<span class="pf-ok">verde</span> eseguito / <span class="pf-pian">blu</span> pianificato) si calcola da solo confrontando con oggi. Svuota il campo e salva per tornare al calcolo automatico.</p><p><a href="{{ url_for('sgq.formazione') }}">← Torna ai corsi</a></p></div>
+
+<section class="card"><h2>➕ Aggiungi persona (senza account di accesso)</h2>
+<p class="muted">Per chi ha già un PIN di accesso al programma, compare qui automaticamente — non serve aggiungerlo.</p>
+<form method="post" action="{{ url_for('sgq.nuova_persona_formazione') }}" class="inline-form">
+<input type="text" name="full_name" placeholder="Nome e cognome *" required>
+<button class="btn primary">Aggiungi</button>
+</form></section>
+
+{% for tipo, pid, nome in persone %}{% set chiave = tipo ~ pid %}<form id="riga-pf-{{ chiave }}" method="post" action="{{ url_for('sgq.salva_riga_piano_formazione', chiave=chiave) }}"></form>{% endfor %}
+
+<section class="card"><div class="pf-wrap"><table class="pf-table"><thead><tr><th class="pf-fisso">Persona</th><th class="pf-fisso">Gap know-how</th>{% for area in aree %}<th>{{ area }}</th>{% endfor %}<th class="pf-fisso"></th></tr></thead><tbody>
+{% for tipo, pid, nome in persone %}{% set chiave = tipo ~ pid %}<tr>
+<td class="pf-persona">{{ nome }}</td>
+<td><input form="riga-pf-{{ chiave }}" type="text" name="gap_note" value="{{ gap_notes.get(chiave, '') or '' }}" placeholder="—"></td>
+{% for area in aree %}{% set voce = matrice.get(chiave, {}).get(area) %}<td>
+<input form="riga-pf-{{ chiave }}" type="date" name="cella_{{ area }}" value="{{ voce.data_iso if voce else '' }}" title="{{ voce.testo if voce else '' }}" class="{{ 'pf-ok' if (voce and voce.eseguito) else ('pf-pian' if voce else '') }}">
+</td>{% endfor %}
+<td><button form="riga-pf-{{ chiave }}" class="btn pf-riga-btn primary">Salva</button></td>
+</tr>{% endfor %}
+<tr><td colspan="2" style="text-align:right;font-weight:800;color:#a3202d">ORE TOTALI</td>{% for area in aree %}<td style="font-weight:800;color:#a3202d">{{ '%.0f'|format(ore_totali_area.get(area,0)) }}</td>{% endfor %}<td></td></tr>
+</tbody></table></div></section>
+{% endblock %}

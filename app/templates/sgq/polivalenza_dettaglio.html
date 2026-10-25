@@ -1,0 +1,51 @@
+{% extends 'base.html' %}{% block title %}Polivalenza {{ matrice.business_unit }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">MATRICE DI POLIVALENZA</p><h1>{{ matrice.business_unit }}</h1><p class="muted">0 = non idoneo, 1 = formazione avviata, 2 = in formazione, 3 = formazione da completare, 4 = formato. Nomi e mansioni sono entrambi modificabili.</p><p><a href="{{ url_for('sgq.polivalenza_elenco') }}">← Torna alle matrici</a></p></div>
+
+<section class="card"><h2>➕ Aggiungi persona</h2>
+<form method="post" action="{{ url_for('sgq.nuova_persona_polivalenza', matrix_id=matrice.id) }}" class="inline-form">
+<input type="text" name="full_name" placeholder="Nome e cognome *" required>
+<button class="btn primary">Aggiungi persona</button>
+</form></section>
+
+<section class="card"><h2>➕ Aggiungi mansione/postazione</h2>
+<form method="post" action="{{ url_for('sgq.nuova_colonna_polivalenza', matrix_id=matrice.id) }}" class="inline-form">
+<input type="text" name="group_label" placeholder="Gruppo (facoltativo, es. INDIRETTI)">
+<input type="text" name="label" placeholder="Nome mansione/postazione *" required>
+<button class="btn primary">Aggiungi mansione</button>
+</form></section>
+
+{% if matrice.columns and matrice.employees %}
+<section class="card"><form method="post" action="{{ url_for('sgq.salva_matrice_polivalenza', matrix_id=matrice.id) }}">
+<div class="table-wrap"><table><thead>
+<tr><th></th>{% for c in matrice.columns %}<th style="font-weight:400;color:#667">{{ c.group_label or '' }}</th>{% endfor %}</tr>
+<tr><th>Persona</th>{% for c in matrice.columns %}<th>
+<form method="post" action="{{ url_for('sgq.rinomina_colonna_polivalenza', column_id=c.id) }}" class="inline-form" style="gap:2px">
+<input type="text" name="group_label" value="{{ c.group_label or '' }}" style="width:70px;font-size:11px" placeholder="gruppo">
+<input type="text" name="label" value="{{ c.label }}" style="width:90px;font-size:12px" required>
+<button class="btn small" style="padding:2px 6px" title="Rinomina">✓</button>
+</form>
+<form method="post" action="{{ url_for('sgq.elimina_colonna_polivalenza', column_id=c.id) }}" onsubmit="return confirm('Eliminare la mansione {{ c.label }}?');" style="display:inline"><button class="btn small danger" style="padding:1px 6px" type="submit">Elimina</button></form>
+</th>{% endfor %}</tr>
+</thead><tbody>
+{% for p in matrice.employees %}<tr>
+<td>
+<form method="post" action="{{ url_for('sgq.rinomina_persona_polivalenza', employee_id=p.id) }}" class="inline-form" style="gap:2px">
+<input type="text" name="full_name" value="{{ p.full_name }}" style="min-width:150px" required>
+<button class="btn small" style="padding:2px 6px" title="Rinomina">✓</button>
+</form>
+<form method="post" action="{{ url_for('sgq.elimina_persona_polivalenza', employee_id=p.id) }}" onsubmit="return confirm('Eliminare {{ p.full_name }} dalla matrice?');"><button class="btn small danger" style="padding:1px 6px;margin-top:2px" type="submit">Elimina</button></form>
+</td>
+{% for c in matrice.columns %}<td><select name="cella_{{ p.id }}_{{ c.id }}" style="min-width:60px">
+{% set attuale = valori.get((p.id, c.id), 0) %}
+<option value="0" {% if attuale==0 %}selected{% endif %}>0</option>
+<option value="1" {% if attuale==1 %}selected{% endif %}>1</option>
+<option value="2" {% if attuale==2 %}selected{% endif %}>2</option>
+<option value="3" {% if attuale==3 %}selected{% endif %}>3</option>
+<option value="4" {% if attuale==4 %}selected{% endif %}>4</option>
+</select></td>{% endfor %}
+</tr>{% endfor %}
+</tbody></table></div>
+<button class="btn primary" style="margin-top:14px">Salva livelli matrice</button>
+</form></section>
+{% else %}<section class="card"><p class="empty">Aggiungi almeno una persona e una mansione/postazione per iniziare a compilare.</p></section>{% endif %}
+{% endblock %}

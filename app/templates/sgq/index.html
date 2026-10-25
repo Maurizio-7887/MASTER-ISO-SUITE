@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Riesame, Audit e Miglioramento{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA DI GESTIONE PER LA QUALITÀ</p><h1>Riesame, Audit e Miglioramento</h1><p class="muted">Non conformità (8D), verifiche ispettive e riesame della direzione. Manutenzione, formazione e tarature sono nel menu principale. Il miglioramento dei processi è anche nel cruscotto <a href="{{ url_for('quality_objectives.index') }}">Obiettivi Qualità</a>.</p></div>
+
+<section class="metrics">
+<div class="metric"><small>Non conformità aperte</small><strong>{{ n_nc_aperte }}</strong></div>
+<div class="metric"><small>Audit pianificati</small><strong>{{ audit_pianificati|length }}</strong></div>
+</section>
+
+
+
+<section class="card"><div class="row"><a class="btn primary" href="{{ url_for('sgq.non_conformita') }}">⚠️ Non conformità (8D)</a><a class="btn primary" href="{{ url_for('sgq.audit') }}">🔍 Verifiche ispettive</a><a class="btn primary" href="{{ url_for('sgq.riesame_direzione') }}">📋 Riesame della Direzione</a></div></section>
+
+<section class="card document-list"><h2>⚠️ Non conformità ancora aperte</h2>
+{% for nc in nc_aperte %}<div class="document-row"><div><b>{{ nc.number or ('NC #' ~ nc.id) }}</b> — {{ nc.customer or '—' }} · {{ nc.opened_at.strftime('%d/%m/%Y') }}<p>{{ nc.d2_description or '—' }}</p></div><a class="btn small" href="{{ url_for('sgq.dettaglio_nc', nc_id=nc.id) }}">Apri</a></div>{% else %}<p class="empty">Nessuna non conformità aperta.</p>{% endfor %}
+</section>
+{% endblock %}

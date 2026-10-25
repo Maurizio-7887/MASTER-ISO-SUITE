@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% block title %}Documenti tecnici{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">ARCHIVIO ELETTRONICO CONTROLLATO</p><h1>Manuale qualità, procedure, CPC e modulistica</h1><p class="muted">Ogni voce mostra solo l'ultima versione controllata. Le revisioni precedenti restano consultabili nello storico. PDF testuali, CSV e TXT sono ricercabili anche per contenuto.</p></div>
+{% if current_user.is_owner %}
+<section class="card"><h2>Carica nuova versione</h2><form action="{{ url_for('documents.upload') }}" method="post" enctype="multipart/form-data" class="upload-form">
+<label>File<input type="file" name="file" required accept=".pdf,.txt,.csv,.xlsx,.xls,.docx,.png,.jpg,.jpeg"></label>
+<label>Categoria<select name="category">{% for c in categorie %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select></label>
+<label>Titolo documento<input type="text" name="document_title" placeholder="Es. Manuale Qualità, Procedura Gestione Non Conformità, Piano di controllo staffa saldata..."></label>
+<label>Revisione<input type="text" name="revision_label" placeholder="Es. Rev. 3 del 04/08/2026"></label>
+<label>Sostituisce (facoltativo)<select name="supersedes_id"><option value="">— nuovo documento —</option>{% for d in documents %}<option value="{{ d.id }}">{{ d.category }} · {{ d.document_title or d.original_name }}{% if d.revision_label %} ({{ d.revision_label }}){% endif %}</option>{% endfor %}</select></label>
+<button class="btn primary">Carica come versione corrente</button></form>
+<small>Max 20 MB. Se scegli "Sostituisce", la versione precedente resta archiviata nello storico ma non compare più come corrente.</small></section>
+{% endif %}
+<section class="card"><h2>Cerca</h2><form method="get" class="inline-form"><input name="q" value="{{ term }}" placeholder="Titolo, nome file o contenuto"><select name="categoria"><option value="">Tutte le categorie</option>{% for c in categorie %}<option value="{{ c }}" {% if c==categoria %}selected{% endif %}>{{ c }}</option>{% endfor %}</select><button class="btn">Cerca</button></form></section>
+<section class="card document-list"><h2>{% if term or categoria %}Risultati{% else %}Documenti — versione corrente{% endif %}</h2>
+{% for document in documents %}<div class="document-row">
+<div><span class="badge">{{ document.category }}</span> <b>{{ document.document_title or document.original_name }}</b>{% if document.revision_label %} <span class="muted">— {{ document.revision_label }}</span>{% endif %}
+<small>Caricato il {{ document.uploaded_at.strftime('%d/%m/%Y %H:%M') }} da {{ document.uploaded_by.name }}</small>
+{% if document.extracted_text %}<p>{{ document.extracted_text[:280] }}{% if document.extracted_text|length > 280 %}…{% endif %}</p>{% endif %}
+</div>
+<div class="document-actions">
+<a class="btn" href="{{ url_for('documents.download', document_id=document.id) }}">Apri file</a>
+<a class="btn" href="{{ url_for('documents.history', document_id=document.id) }}">Storico revisioni</a>
+{% if current_user.is_owner %}<form action="{{ url_for('documents.delete', document_id=document.id) }}" method="post" onsubmit="return confirm('Eliminare definitivamente questo documento? L\'operazione non è reversibile.');"><button class="btn danger">Elimina</button></form>{% endif %}
+</div></div>{% else %}<p class="empty">Nessun documento trovato.</p>{% endfor %}
+</section>
+{% endblock %}

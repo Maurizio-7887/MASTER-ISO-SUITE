@@ -1,0 +1,84 @@
+{% extends 'base.html' %}{% block title %}VSME Semplificata{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">RENDICONTAZIONE VOLONTARIA — STANDARD VSME ESRS (EFRAG)</p><h1>Registro Indicatori VSME</h1><p class="muted">Lo Standard VSME prevede un nucleo minimo — il <b>Modulo Base</b> — che è la dichiarazione volontaria vera e propria, sempre da compilare. Le sezioni <b>Narrativo-PAT</b> e <b>Partner Commerciali</b> sono approfondimenti facoltativi: si compilano solo quando li richiede esplicitamente una banca, un finanziatore o un grande cliente/capogruppo della filiera. Per le voci narrative: scrivi prima qualche appunto puntato nel campo Note, poi usa "✨ Genera bozza con AI" per trasformarlo in un paragrafo — l'AI riformula, non inventa fatti nuovi. Rileggi sempre la bozza prima di segnarla come completata.</p></div>
+
+<section class="card"><h2>Anno di rendicontazione</h2>
+<form method="get" class="inline-form"><select name="anno" onchange="this.form.submit()">{% for a in anni_disponibili %}<option value="{{ a }}" {% if a==anno %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></form>
+<form method="post" action="{{ url_for('vsme.nuovo_anno') }}" class="inline-form" style="margin-top:10px">
+<input type="number" name="anno" placeholder="Nuovo anno (es. {{ anno + 1 }})" style="max-width:160px">
+<button class="btn">Predisponi registro per un nuovo anno</button>
+</form>
+</section>
+
+<section class="metrics">
+<div class="metric"><small>Modulo Base — compilati / totale</small><strong>{{ completati_base }} / {{ totale_base }}</strong></div>
+<div class="metric"><small>Approfondimenti facoltativi — compilati / totale</small><strong>{{ completati_facoltativi }} / {{ totale_facoltativi }}</strong></div>
+<div class="metric"><small>Indicatori totali {{ anno }}</small><strong>{{ totale_completati }} / {{ totale_voci }}</strong></div>
+</section>
+
+<section class="card"><h2>Estratto pronto per il sito</h2><p class="muted">Vista di sola lettura con i soli indicatori compilati e marcati "pubblica sul sito", pronta da linkare o copiare sul sito internet.</p>
+<a class="btn primary" href="{{ url_for('vsme.pubblica', anno=anno) }}">Apri estratto pubblicabile {{ anno }}</a>
+</section>
+
+<section class="card"><h2>Allegato al Bilancio</h2><p class="muted">Relazione sulla Sostenibilità completa, nella struttura dello Standard VSME ESRS (Modulo Base, con in coda gli approfondimenti facoltativi eventualmente compilati), pronta per la stampa/esportazione in PDF dal browser.</p>
+<a class="btn primary" href="{{ url_for('vsme_report.allegato', anno=anno) }}" target="_blank">Genera Allegato al Bilancio {{ anno }}</a>
+</section>
+
+{% macro sezione_modulo(m) %}
+<section class="card document-list">
+<h2>{{ m.codice }} — {{ m.nome }} <span class="tag">{{ m.completati }}/{{ m.totale }}</span></h2>
+{% for i in m.voci %}
+<div class="document-row" id="ind-{{ i.id }}" style="flex-direction:column;align-items:stretch;gap:8px">
+<div>
+<span class="badge {{ i.status }}">{{ i.status.replace('_',' ')|upper }}</span>
+<b>{{ i.indicator_name }}</b>{% if i.unit %} <span class="muted">({{ i.unit }})</span>{% endif %}
+{% if i.description %}<p class="muted" style="margin:4px 0 0">{{ i.description }}</p>{% endif %}
+</div>
+<form method="post" action="{{ url_for('vsme.aggiorna', indicator_id=i.id) }}" class="form-grid">
+<input type="text" name="value" value="{{ i.value or '' }}" placeholder="Valore rilevato">
+<select name="status">
+<option value="da_compilare" {% if i.status=='da_compilare' %}selected{% endif %}>Da compilare</option>
+<option value="completato" {% if i.status=='completato' %}selected{% endif %}>Completato</option>
+<option value="non_applicabile" {% if i.status=='non_applicabile' %}selected{% endif %}>Non applicabile</option>
+</select>
+<input type="text" name="notes" value="{{ i.notes or '' }}" placeholder="Appunti puntati (usati anche dall'AI per la bozza)" class="span2">
+<label style="display:flex;align-items:center;gap:6px;font-weight:700"><input type="checkbox" name="publish_on_site" style="width:auto;height:auto" {% if i.publish_on_site %}checked{% endif %}> Pubblica sul sito</label>
+<button class="btn primary">Salva</button>
+</form>
+<form method="post" action="{{ url_for('vsme.genera_bozza', indicator_id=i.id) }}" style="margin-top:6px">
+<button class="btn" title="Riformula gli appunti scritti nel campo Note in un paragrafo. Non inventa fatti nuovi.">✨ Genera bozza con AI dagli appunti</button>
+</form>
+</div>
+{% endfor %}
+</section>
+{% endmacro %}
+
+<!-- MODULO BASE — sempre da compilare -->
+<section class="card pillar-banner pillar-sempre">
+<span class="pillar-badge pillar-badge-sempre">{{ pillar_info['Base'].badge }}</span>
+<h2 style="margin-top:8px">{{ pillar_info['Base'].titolo }}</h2>
+<p class="muted" style="margin:0">{{ pillar_info['Base'].nota }}</p>
+</section>
+{% for m in moduli_base %}{{ sezione_modulo(m) }}{% endfor %}
+
+<!-- APPROFONDIMENTI FACOLTATIVI — solo su richiesta di banche/grandi clienti -->
+<section class="card pillar-banner pillar-facoltativo">
+<span class="pillar-badge pillar-badge-facoltativo">SOLO SU RICHIESTA</span>
+<h2 style="margin-top:8px">Approfondimenti facoltativi</h2>
+<p class="muted" style="margin:0">Le due sezioni seguenti (Narrativo-PAT e Partner Commerciali) <b>non fanno parte della dichiarazione volontaria di base</b>. Compilale solo se una banca, un finanziatore o un grande cliente/capogruppo della filiera te lo chiede espressamente — ad esempio in risposta a un questionario ESG o a un'istruttoria di finanziamento sostenibile. Finché nessuno le richiede, puoi lasciarle "Da compilare" senza che questo pregiudichi la dichiarazione VSME di base.</p>
+</section>
+
+<section class="card pillar-banner pillar-facoltativo">
+<span class="pillar-badge pillar-badge-facoltativo">{{ pillar_info['Narrativo-PAT'].badge }}</span>
+<h2 style="margin-top:8px">{{ pillar_info['Narrativo-PAT'].titolo }}</h2>
+<p class="muted" style="margin:0">{{ pillar_info['Narrativo-PAT'].nota }}</p>
+</section>
+{% for m in moduli_narrativi %}{{ sezione_modulo(m) }}{% endfor %}
+
+<section class="card pillar-banner pillar-facoltativo">
+<span class="pillar-badge pillar-badge-facoltativo">{{ pillar_info['Partner Commerciali'].badge }}</span>
+<h2 style="margin-top:8px">{{ pillar_info['Partner Commerciali'].titolo }}</h2>
+<p class="muted" style="margin:0">{{ pillar_info['Partner Commerciali'].nota }}</p>
+</section>
+{% for m in moduli_bp %}{{ sezione_modulo(m) }}{% endfor %}
+
+{% endblock %}

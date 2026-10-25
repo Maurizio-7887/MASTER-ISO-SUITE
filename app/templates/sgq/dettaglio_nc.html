@@ -1,0 +1,36 @@
+{% extends 'base.html' %}{% block title %}{{ nc.number or ('NC #' ~ nc.id) }}{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">SISTEMA QUALITÀ · NON CONFORMITÀ</p><h1>{{ nc.number or ('NC #' ~ nc.id) }} <span class="badge {{ 'completato' if nc.status=='chiusa' else 'da_compilare' }}">{{ nc.status|upper }}</span></h1></div>
+
+<form method="post" action="{{ url_for('sgq.salva_nc', nc_id=nc.id) }}">
+<section class="card"><h2>Dati generali</h2>
+<div class="form-grid">
+<input type="text" name="number" value="{{ nc.number or '' }}" placeholder="Numero">
+<input type="text" name="customer" value="{{ nc.customer or '' }}" placeholder="Cliente">
+<input type="text" name="article_code" value="{{ nc.article_code or '' }}" placeholder="Codice articolo">
+<input type="number" name="pieces" value="{{ nc.pieces or '' }}" placeholder="N. pezzi">
+<input type="text" name="where_found" value="{{ nc.where_found or '' }}" placeholder="Dove è stata rilevata">
+<input type="text" name="responsible" value="{{ nc.responsible or '' }}" placeholder="Responsabile">
+</div></section>
+
+<section class="card"><h2>D1 — Team</h2><textarea name="d1_team" rows="2" placeholder="Persone coinvolte">{{ nc.d1_team or '' }}</textarea></section>
+<section class="card"><h2>D2 — Descrizione del problema</h2><textarea name="d2_description" rows="3" required>{{ nc.d2_description or '' }}</textarea></section>
+<section class="card"><h2>D3 — Azioni di contenimento</h2><textarea name="d3_containment" rows="3" placeholder="Rischi/impatto su prodotti e processi simili">{{ nc.d3_containment or '' }}</textarea></section>
+<section class="card"><h2>D4 — Analisi delle cause</h2><textarea name="d4_root_cause" rows="3" placeholder="5 Perché, Ishikawa, ecc.">{{ nc.d4_root_cause or '' }}</textarea></section>
+<section class="card"><h2>D5 — Azioni correttive</h2><textarea name="d5_corrective_actions" rows="3">{{ nc.d5_corrective_actions or '' }}</textarea><label>Data<input type="date" name="d5_date" value="{{ nc.d5_date.isoformat() if nc.d5_date else '' }}"></label></section>
+<section class="card"><h2>D6 — Verifica dell'azione correttiva</h2><textarea name="d6_verification" rows="3">{{ nc.d6_verification or '' }}</textarea><label>Data<input type="date" name="d6_date" value="{{ nc.d6_date.isoformat() if nc.d6_date else '' }}"></label></section>
+<section class="card"><h2>D7 — Estensione / azioni preventive</h2><textarea name="d7_extension" rows="3" placeholder="Sistemi/processi simili su cui estendere l'azione">{{ nc.d7_extension or '' }}</textarea></section>
+<section class="card"><h2>D8 — Note di chiusura</h2><textarea name="d8_notes" rows="2">{{ nc.d8_notes or '' }}</textarea></section>
+
+<section class="card"><button class="btn primary">💾 Salva report 8D</button></section>
+</form>
+
+<section class="card">
+{% if nc.status == 'aperta' %}
+<form method="post" action="{{ url_for('sgq.chiudi_nc', nc_id=nc.id) }}" onsubmit="return confirm('Chiudere questa non conformità?');"><button class="btn success">✅ Chiudi non conformità</button></form>
+{% else %}
+<p class="muted">Chiusa il {{ nc.closed_at.strftime('%d/%m/%Y') if nc.closed_at else '—' }}.</p>
+<form method="post" action="{{ url_for('sgq.riapri_nc', nc_id=nc.id) }}"><button class="btn">↩ Riapri</button></form>
+{% endif %}
+</section>
+<a class="btn" href="{{ url_for('sgq.non_conformita') }}">← Elenco non conformità</a>
+{% endblock %}

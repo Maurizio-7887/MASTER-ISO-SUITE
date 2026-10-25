@@ -1,0 +1,249 @@
+{% extends 'base.html' %}{% block title %}Registro manutenzione{% endblock %}{% block content %}
+<style>
+.mm-intro-actions{margin:6px 0 0}
+.mm-toolbar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:2px solid var(--navy);padding:14px 0;display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.mm-toolbar input[type="text"]{font:inherit;font-size:.92rem;padding:10px 14px;border:1px solid #bcc9d4;border-radius:6px;background:#fff;color:var(--ink);flex:1;min-width:220px}
+.mm-toolbar input[type="text"]:focus{outline:3px solid rgba(19,184,212,.22);border-color:var(--cyan)}
+.mm-toolbar-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.mm-toolbar-label{font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:2px}
+.mm-chip{font-size:.72rem;font-weight:700;letter-spacing:.02em;padding:7px 13px;border:1px solid #bcc9d4;border-radius:20px;background:#fff;color:var(--ink);cursor:pointer;user-select:none;white-space:nowrap}
+.mm-chip:hover{border-color:var(--cyan)}
+.mm-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.mm-count{font-size:.72rem;color:var(--muted);white-space:nowrap;margin-left:auto}
+.mm-reparto-section{margin-top:30px}
+.mm-reparto-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding-bottom:8px;border-bottom:3px solid var(--navy)}
+.mm-reparto-head h2{font-size:1.15rem;margin:0;letter-spacing:.02em;color:var(--navy);text-transform:uppercase}
+.mm-reparto-head .mm-n{font-size:.72rem;color:var(--muted)}
+.mm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.mm-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px;box-shadow:var(--shadow);border-left:6px solid var(--accent,var(--cyan));display:flex;flex-direction:column;gap:8px}
+.mm-card.mm-inactive{opacity:.55}
+.mm-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.mm-codice{font-size:.72rem;font-weight:800;background:var(--accent,var(--cyan));color:#fff;padding:3px 9px;border-radius:4px;white-space:nowrap}
+.mm-isola-tag{font-size:.62rem;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:2px 7px;white-space:nowrap;text-transform:uppercase;font-weight:800}
+.mm-nome{font-size:1rem;font-weight:800;text-transform:uppercase;line-height:1.2;margin:0;color:var(--ink)}
+.mm-categoria{font-size:.72rem;color:var(--muted)}
+.mm-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.mm-freq-pill{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.02em;padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;background:var(--cyan-pale);color:var(--navy-2)}
+.mm-freq-pill .mm-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan)}
+.mm-freq-none{background:#eef1f4;color:var(--muted)}
+.mm-freq-none .mm-dot{background:var(--muted)}
+.mm-btn-ghost{font-size:.72rem;font-weight:800;padding:8px 10px;border-radius:6px;border:1px solid var(--navy-2);background:#fff;color:var(--navy-2);cursor:pointer;white-space:nowrap}
+.mm-btn-ghost:hover{background:var(--cyan-pale)}
+.mm-form{display:none;flex-direction:column;gap:10px;margin-top:8px;padding-top:10px;border-top:1px dashed var(--line)}
+.mm-form.mm-open{display:flex}
+.mm-frow{display:flex;gap:8px}
+.mm-fgroup{display:flex;flex-direction:column;gap:3px;flex:1}
+.mm-fgroup label{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.mm-fgroup input,.mm-fgroup select,.mm-fgroup textarea{font:inherit;font-size:.85rem;padding:8px 9px;border:1px solid #bcc9d4;border-radius:6px;background:#fff;color:var(--ink)}
+.mm-fgroup textarea{resize:vertical;min-height:52px}
+.mm-chi-note{margin:0;font-size:.72rem;color:var(--muted)}
+.mm-submit-row{display:flex;justify-content:flex-end;gap:8px}
+.mm-btn-secondary{font-size:.78rem;font-weight:700;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.mm-btn-primary{font-size:.78rem;font-weight:800;padding:9px 14px;border-radius:6px;border:0;background:var(--green);color:#fff;cursor:pointer}
+.mm-empty{color:var(--muted);padding:20px 0}
+.mm-modal{display:none;position:fixed;inset:0;background:rgba(16,43,67,.55);z-index:100;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.mm-modal.mm-open{display:flex}
+.mm-modal-box{background:#fff;border-radius:10px;max-width:960px;width:100%;box-shadow:0 20px 60px rgba(16,43,67,.35);overflow:hidden}
+.mm-modal-head{display:flex;justify-content:space-between;align-items:center;background:var(--navy);color:#fff;padding:16px 20px}
+.mm-modal-head h2{margin:0;font-size:1.1rem}
+.mm-modal-head .mm-btn-ghost{background:transparent;border-color:rgba(255,255,255,.5);color:#fff}
+.mm-modal-body{padding:16px 20px 22px}
+.mm-modal-body select{font:inherit;padding:9px 10px;border:1px solid #bcc9d4;border-radius:6px;min-width:260px}
+.mm-modal-count{font-size:.75rem;color:var(--muted);margin-left:10px}
+.mm-table-wrap{margin-top:14px;overflow:auto;max-height:55vh;border:1px solid var(--line);border-radius:8px}
+.mm-table-wrap table{width:100%;border-collapse:collapse;font-size:.85rem}
+.mm-table-wrap th{position:sticky;top:0;background:#f2f5f8;text-align:left;padding:9px 10px;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--line)}
+.mm-table-wrap td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.mm-table-wrap tr:last-child td{border-bottom:0}
+.mm-empty-row{text-align:center;color:var(--muted);padding:20px}
+@media(max-width:700px){.mm-frow{flex-direction:column}.mm-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="intro">
+  <p class="eyebrow">SISTEMA QUALITÀ · MANUTENZIONE</p>
+  <h1>Macchine e registro interventi</h1>
+  <p class="muted">Cerca la macchina, apri "Storico" per vedere gli interventi già fatti oppure "Registra" per aggiungerne uno nuovo. Sei collegato come <strong>{{ current_user.name }}</strong>.
+  {% if current_user.is_owner %}Gestisci macchine e piano preventivo in <a href="{{ url_for('sgq.manutenzione') }}">Macchine e piano</a>.{% endif %}</p>
+</div>
+
+{% if macchine %}
+<div class="mm-toolbar">
+  <input type="text" id="mm-search" placeholder="Cerca per codice, nome o reparto…">
+  <div class="mm-toolbar-row">
+    <span class="mm-toolbar-label">Reparto</span>
+    <span class="mm-chip active" data-filter="reparto" data-value="all">Tutti</span>
+    {% for reparto in macchine_per_reparto.keys() %}<span class="mm-chip" data-filter="reparto" data-value="{{ reparto }}">{{ reparto }}</span>{% endfor %}
+  </div>
+  <div class="mm-toolbar-row">
+    <span class="mm-toolbar-label">Categoria</span>
+    <span class="mm-chip active" data-filter="categoria" data-value="all">Tutte</span>
+    {% for cat in categorie %}<span class="mm-chip" data-filter="categoria" data-value="{{ cat }}">{{ cat }}</span>{% endfor %}
+    <span class="mm-count" id="mm-count"></span>
+  </div>
+</div>
+
+{% for reparto, lista in macchine_per_reparto.items() %}
+<div class="mm-reparto-section" data-reparto-block="{{ reparto }}">
+  <div class="mm-reparto-head"><h2>{{ reparto }}</h2><span class="mm-n">{{ lista|length }} macchin{{ 'a' if lista|length == 1 else 'e' }}</span></div>
+  <div class="mm-grid">
+    {% for m in lista %}
+    {% set attive_piano = m.plan_items|selectattr('active')|list %}
+    <div class="mm-card {{ 'mm-inactive' if not m.active }}" style="--accent:{{ colore_categoria(m.category) }}"
+         data-search="{{ (m.code ~ ' ' ~ m.name ~ ' ' ~ reparto ~ ' ' ~ (m.category or ''))|lower }}"
+         data-reparto="{{ reparto }}" data-categoria="{{ m.category or '' }}">
+      <div class="mm-card-top">
+        <span class="mm-codice">{{ m.code }}</span>
+        {% if not m.active %}<span class="mm-isola-tag">Disattivata</span>{% endif %}
+      </div>
+      <p class="mm-nome">{{ m.name }}</p>
+      <div class="mm-categoria">{{ m.category or 'Senza categoria' }}</div>
+      <div class="mm-card-foot">
+        {% if attive_piano %}
+          <span class="mm-freq-pill"><span class="mm-dot"></span>{{ attive_piano[0].frequency or 'Programmata' }}</span>
+        {% else %}
+          <span class="mm-freq-pill mm-freq-none"><span class="mm-dot"></span>Da programmare</span>
+        {% endif %}
+        <div style="display:flex;gap:6px">
+          <button type="button" class="mm-btn-ghost" onclick="mmOpenStorico('{{ m.id }}')">📖 Storico</button>
+          <button type="button" class="mm-btn-ghost" onclick="mmToggleForm('{{ m.id }}')">＋ Registra</button>
+        </div>
+      </div>
+      <form class="mm-form" id="mm-form-{{ m.id }}" method="post" action="{{ url_for('sgq.registra_manutenzione') }}">
+        <input type="hidden" name="machine_id" value="{{ m.id }}">
+        {% set attive_piano_form = m.plan_items|selectattr('active')|list %}
+        {% if attive_piano_form %}
+        <div class="mm-fgroup">
+          <label>Voce di piano (facoltativo)</label>
+          <select name="plan_item_id" onchange="mmFillFromPiano(this,'{{ m.id }}')">
+            <option value="">— Intervento libero / straordinario —</option>
+            {% for p in attive_piano_form %}<option value="{{ p.id }}" data-intervento="{{ p.intervention }}">{{ p.intervention }}{% if p.frequency %} ({{ p.frequency }}){% endif %}</option>{% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <div class="mm-frow">
+          <div class="mm-fgroup"><label>Data</label><input type="date" name="data" value="{{ oggi.isoformat() }}" required></div>
+          <div class="mm-fgroup"><label>Tipo</label>
+            <select name="tipo" required>
+              {% for valore, etichetta in tipi_intervento.items() %}<option value="{{ valore }}" {% if valore=='straordinaria' %}selected{% endif %}>{{ etichetta }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="mm-fgroup"><label>Intervento</label><textarea name="intervention" id="mm-interv-{{ m.id }}" placeholder="Descrizione dell'intervento eseguito" required></textarea></div>
+        <div class="mm-frow">
+          <div class="mm-fgroup"><label>Ditta esterna</label><input type="text" name="external_company" placeholder="Se applicabile"></div>
+          <div class="mm-fgroup" style="max-width:110px"><label>Ore</label><input type="number" name="hours" step="0.5" min="0" placeholder="0"></div>
+        </div>
+        <p class="mm-chi-note">Registrato da: <strong>{{ current_user.name }}</strong></p>
+        <div class="mm-submit-row">
+          <button type="button" class="mm-btn-secondary" onclick="mmToggleForm('{{ m.id }}')">Annulla</button>
+          <button type="submit" class="mm-btn-primary">Salva intervento</button>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<section class="card"><p class="empty">Nessuna macchina attiva censita: chiedi al Responsabile Qualità di aggiungerla in "Sistema Qualità" → "Manutenzione".</p></section>
+{% endif %}
+
+<div class="mm-modal" id="mm-modal">
+  <div class="mm-modal-box">
+    <div class="mm-modal-head"><h2>Registro interventi</h2><button type="button" class="mm-btn-ghost" onclick="mmCloseStorico()">✕ Chiudi</button></div>
+    <div class="mm-modal-body">
+      <select id="mm-modal-select"><option value="all">Tutte le macchine</option>
+        {% for m in macchine %}<option value="{{ m.id }}">{{ m.code }} — {{ m.name }}</option>{% endfor %}
+      </select>
+      <span class="mm-modal-count" id="mm-modal-count"></span>
+      <div class="mm-table-wrap">
+        <table>
+          <thead><tr><th>Giorno</th><th>Macchina</th><th>Chi</th><th>Cosa ha fatto</th><th>Tipo</th><th>Ditta esterna</th><th>Ore</th></tr></thead>
+          <tbody id="mm-modal-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MM_LOGS = {{ storico_json|tojson }};
+
+function mmToggleForm(machineId){
+  document.getElementById('mm-form-'+machineId).classList.toggle('mm-open');
+}
+
+function mmFillFromPiano(select, machineId){
+  const opt = select.selectedOptions[0];
+  const textarea = document.getElementById('mm-interv-'+machineId);
+  const form = document.getElementById('mm-form-'+machineId);
+  if(opt && opt.dataset.intervento){
+    textarea.value = opt.dataset.intervento;
+    const tipoSelect = form.querySelector('select[name="tipo"]');
+    if(tipoSelect) tipoSelect.value = 'programmata';
+  }
+}
+
+function mmRenderStorico(){
+  const sel = document.getElementById('mm-modal-select').value;
+  const rows = sel === 'all' ? MM_LOGS : MM_LOGS.filter(r => String(r.machine_id) === sel);
+  const tbody = document.getElementById('mm-modal-tbody');
+  if(!rows.length){
+    tbody.innerHTML = '<tr><td class="mm-empty-row" colspan="7">Nessun intervento registrato.</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(r => `<tr>
+      <td>${r.giorno}</td><td>${r.macchina}</td><td>${r.chi}</td><td>${r.cosa}</td>
+      <td>${r.tipo}</td><td>${r.ditta}</td><td>${r.ore}</td></tr>`).join('');
+  }
+  document.getElementById('mm-modal-count').textContent = rows.length + ' interventi';
+}
+
+function mmOpenStorico(machineId){
+  document.getElementById('mm-modal-select').value = machineId;
+  mmRenderStorico();
+  document.getElementById('mm-modal').classList.add('mm-open');
+}
+function mmCloseStorico(){
+  document.getElementById('mm-modal').classList.remove('mm-open');
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape') mmCloseStorico(); });
+document.getElementById('mm-modal-select') && document.getElementById('mm-modal-select').addEventListener('change', mmRenderStorico);
+document.getElementById('mm-modal').addEventListener('click', e => { if(e.target.id === 'mm-modal') mmCloseStorico(); });
+
+// ---- filtri reparto/categoria + ricerca ----
+let mmState = {reparto:'all', categoria:'all', query:''};
+function mmApplyFilters(){
+  const q = mmState.query.trim().toLowerCase();
+  let visibili = 0, totali = 0;
+  document.querySelectorAll('.mm-card').forEach(card => {
+    totali++;
+    const repOk = mmState.reparto === 'all' || card.dataset.reparto === mmState.reparto;
+    const catOk = mmState.categoria === 'all' || card.dataset.categoria === mmState.categoria;
+    const qOk = !q || card.dataset.search.includes(q);
+    const show = repOk && catOk && qOk;
+    card.style.display = show ? '' : 'none';
+    if(show) visibili++;
+  });
+  document.querySelectorAll('.mm-reparto-section').forEach(sec => {
+    const anyVisible = [...sec.querySelectorAll('.mm-card')].some(c => c.style.display !== 'none');
+    sec.style.display = anyVisible ? '' : 'none';
+  });
+  const countEl = document.getElementById('mm-count');
+  if(countEl) countEl.textContent = visibili + ' / ' + totali + ' macchine';
+}
+document.querySelectorAll('.mm-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const filtro = chip.dataset.filter;
+    document.querySelectorAll(`.mm-chip[data-filter="${filtro}"]`).forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    mmState[filtro] = chip.dataset.value;
+    mmApplyFilters();
+  });
+});
+const mmSearchInput = document.getElementById('mm-search');
+if(mmSearchInput){
+  mmSearchInput.addEventListener('input', e => { mmState.query = e.target.value; mmApplyFilters(); });
+}
+mmApplyFilters();
+</script>
+{% endblock %}

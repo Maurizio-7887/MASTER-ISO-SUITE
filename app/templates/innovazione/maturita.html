@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% block title %}Maturità dell'innovazione{% endblock %}{% block content %}
+<div class="intro"><p class="eyebrow">ISO 56002 · AUTOVALUTAZIONE · §9.2 · §9.3 · §10</p><h1>Maturità del sistema di gestione dell'innovazione</h1><p class="muted">Un voto da 0 a 5 per ogni punto della norma: dove siamo oggi, dove intervenire. Ripetuta ogni anno, mostra i progressi.</p></div>
+{% include 'innovazione/_nav.html' %}
+{% if ultima %}<div class="two-col" style="margin-top:0">
+<section class="card"><h2>Profilo per capitolo · media {{ media }}/5</h2><div style="height:340px"><canvas id="g-radar"></canvas></div></section>
+<section class="card"><h2>Punti più deboli</h2><ul>{% for cap, nome, punti in MATURITA %}{% for cod, tit, dom in punti %}{% set v = ultima.scores.get(cod) %}{% if v is not none and v <= 2 %}<li><b>{{ cod }} {{ tit }}</b> — {{ v }}/5 ({{ LIVELLI[v] }}){% if ultima.notes.get(cod) %}: {{ ultima.notes.get(cod) }}{% endif %}</li>{% endif %}{% endfor %}{% endfor %}</ul>
+<h3>Storico</h3><ul>{% for m in storico %}<li>{{ m.assessed_at.strftime('%d/%m/%Y') }} · {{ m.assessor or '' }} · media <b>{{ media_fn(m) }}</b></li>{% endfor %}</ul>{% if ultima.summary %}<p>{{ ultima.summary }}</p>{% endif %}</section></div>{% endif %}
+<section class="card" style="margin-top:18px"><h2>Nuova autovalutazione</h2><p class="muted">Livelli: {% for n, l in LIVELLI.items() %}<b>{{ n }}</b> {{ l }}{{ ' · ' if not loop.last }}{% endfor %}. I voti partono da quelli dell'ultima autovalutazione.</p>
+<form method="post"><table class="maturity"><tbody>
+{% for cap, nome, punti in MATURITA %}<tr class="cap"><th colspan="3">{{ cap }} · {{ nome }}</th></tr>
+{% for cod, tit, dom in punti %}{% set v = ultima.scores.get(cod) if ultima else none %}<tr><td><b>{{ cod }} {{ tit }}</b><br><small class="muted">{{ dom }}</small></td>
+<td class="voti">{% for n in range(0,6) %}<label><input type="radio" name="s_{{ cod }}" value="{{ n }}" {{ 'checked' if v == n }}><span>{{ n }}</span></label>{% endfor %}</td>
+<td><input name="n_{{ cod }}" value="{{ ultima.notes.get(cod, '') if ultima else '' }}" placeholder="Evidenze / note"></td></tr>{% endfor %}{% endfor %}
+</tbody></table>
+<div class="form-grid" style="margin-top:14px"><input name="assessor" placeholder="Chi valuta"><input name="summary" placeholder="Sintesi e priorità di miglioramento"><button class="btn primary span2">Salva l'autovalutazione</button></div></form></section>
+{% if ultima %}<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script>new Chart(document.getElementById('g-radar'),{type:'radar',data:{labels:{{ capitoli|map(attribute=1)|list|tojson }},datasets:[{label:'Ultima',data:{{ capitoli|map(attribute=2)|list|tojson }},borderColor:'#13b8d4',backgroundColor:'rgba(19,184,212,.18)'}{% if capitoli_prec %},{label:'Precedente',data:{{ capitoli_prec|map(attribute=2)|list|tojson }},borderColor:'#94a3b8',backgroundColor:'rgba(148,163,184,.08)',borderDash:[4,4]}{% endif %}]},options:{maintainAspectRatio:false,scales:{r:{min:0,max:5,ticks:{stepSize:1}}}}});</script>{% endif %}
+{% endblock %}

@@ -1,0 +1,344 @@
+{% extends 'base.html' %}{% block title %}Manutenzione{% endblock %}{% block content %}
+<style>
+/* ---- tabella piano (stile Excel) ---- */
+.pp-toolbar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:2px solid var(--navy);padding:14px 0;display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.pp-toolbar input[type="text"]{font:inherit;font-size:.92rem;padding:10px 14px;border:1px solid #bcc9d4;border-radius:6px;background:#fff;color:var(--ink);flex:1;min-width:220px}
+.pp-toolbar input[type="text"]:focus{outline:3px solid rgba(19,184,212,.22);border-color:var(--cyan)}
+.pp-toolbar-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.pp-toolbar-label{font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:2px}
+.pp-chip{font-size:.72rem;font-weight:700;letter-spacing:.02em;padding:7px 13px;border:1px solid #bcc9d4;border-radius:20px;background:#fff;color:var(--ink);cursor:pointer;user-select:none;white-space:nowrap}
+.pp-chip:hover{border-color:var(--cyan)}
+.pp-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pp-count{font-size:.72rem;color:var(--muted);white-space:nowrap;margin-left:auto}
+.pp-toggle-solo{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--ink);cursor:pointer}
+.pp-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);max-height:72vh}
+.pp-table-wrap table{width:100%;border-collapse:collapse;font-size:.85rem;background:#fff}
+.pp-table-wrap th{position:sticky;top:0;background:var(--navy);color:#fff;text-align:left;padding:10px 12px;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;z-index:2}
+.pp-table-wrap td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.pp-table-wrap tbody tr:nth-child(even){background:#f7f9fb}
+.pp-table-wrap tbody tr.pp-scaduta{background:#fdeaea}
+.pp-table-wrap tbody tr.pp-scaduta:nth-child(even){background:#fce0e0}
+.pp-table-wrap tbody tr.pp-inactive{opacity:.5}
+.pp-badge-si{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:800;text-transform:uppercase;background:#dff5ea;color:#13734b;border-radius:20px;padding:4px 10px;white-space:nowrap}
+.pp-badge-no{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:800;text-transform:uppercase;background:#eef1f4;color:var(--muted);border-radius:20px;padding:4px 10px;white-space:nowrap}
+.pp-badge-no.pp-badge-scaduta{background:#ffe3e5;color:#a02a33}
+.pp-empty-row{text-align:center;color:var(--muted);padding:24px}
+.pp-manage-toggle{margin:30px 0 14px}
+.pp-manage-section{display:none}
+.pp-manage-section.pp-open{display:block}
+
+/* ---- sezione gestione macchine (collassabile) ---- */
+.mp-toolbar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:2px solid var(--navy);padding:14px 0;display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.mp-toolbar input[type="text"]{font:inherit;font-size:.92rem;padding:10px 14px;border:1px solid #bcc9d4;border-radius:6px;background:#fff;color:var(--ink);flex:1;min-width:220px}
+.mp-toolbar input[type="text"]:focus{outline:3px solid rgba(19,184,212,.22);border-color:var(--cyan)}
+.mp-toolbar-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.mp-toolbar-label{font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:2px}
+.mp-chip{font-size:.72rem;font-weight:700;letter-spacing:.02em;padding:7px 13px;border:1px solid #bcc9d4;border-radius:20px;background:#fff;color:var(--ink);cursor:pointer;user-select:none;white-space:nowrap}
+.mp-chip:hover{border-color:var(--cyan)}
+.mp-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.mp-count{font-size:.72rem;color:var(--muted);white-space:nowrap;margin-left:auto}
+.mp-new-card{margin-bottom:22px;display:none}
+.mp-new-card.mp-open{display:block}
+.mp-form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mp-form-grid input[type="text"]{font:inherit;font-size:.9rem;padding:9px 11px;border:1px solid #bcc9d4;border-radius:6px;background:#fff;color:var(--ink)}
+.mp-form-grid input:focus{outline:3px solid rgba(19,184,212,.22);border-color:var(--cyan)}
+.mp-form-grid .mp-btn-primary{grid-column:1/-1}
+.mp-reparto-section{margin-top:26px}
+.mp-reparto-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding-bottom:8px;border-bottom:3px solid var(--navy)}
+.mp-reparto-head h2{font-size:1.05rem;margin:0;letter-spacing:.02em;color:var(--navy);text-transform:uppercase}
+.mp-reparto-head .mp-n{font-size:.72rem;color:var(--muted)}
+.mp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.mp-machine-card{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);border-left:6px solid var(--accent,var(--cyan));padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.mp-machine-card.mp-inactive{opacity:.55}
+.mp-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.mp-codice{font-size:.72rem;font-weight:800;background:var(--accent,var(--cyan));color:#fff;padding:3px 9px;border-radius:4px;white-space:nowrap}
+.mp-tag-off{font-size:.62rem;font-weight:800;text-transform:uppercase;background:#eef1f4;color:var(--muted);border-radius:4px;padding:2px 7px;white-space:nowrap}
+.mp-nome{font-size:1rem;font-weight:800;text-transform:uppercase;line-height:1.2;margin:0;color:var(--ink)}
+.mp-categoria{font-size:.72rem;color:var(--muted)}
+.mp-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.mp-freq-pill{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.02em;padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;background:var(--cyan-pale);color:var(--navy-2)}
+.mp-freq-pill .mp-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan)}
+.mp-freq-none{background:#eef1f4;color:var(--muted)}
+.mp-freq-none .mp-dot{background:var(--muted)}
+.mp-btn-ghost{font-size:.72rem;font-weight:800;padding:8px 10px;border-radius:6px;border:1px solid var(--navy-2);background:#fff;color:var(--navy-2);cursor:pointer;white-space:nowrap}
+.mp-btn-ghost:hover{background:var(--cyan-pale)}
+.mp-panel{display:none;flex-direction:column;gap:10px;margin-top:6px;padding-top:10px;border-top:1px dashed var(--line)}
+.mp-panel.mp-open{display:flex}
+.mp-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mp-edit-grid input[type="text"]{font:inherit;font-size:.85rem;padding:8px 9px;border:1px solid #bcc9d4;border-radius:6px;background:#fff;color:var(--ink)}
+.mp-edit-grid input:focus{outline:3px solid rgba(19,184,212,.22);border-color:var(--cyan)}
+.mp-check{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700;color:var(--ink);grid-column:1/-1}
+.mp-check input{width:auto}
+.mp-actions-row{display:flex;gap:8px;flex-wrap:wrap}
+.mp-btn-primary{border:0;border-radius:6px;background:var(--navy-2);color:#fff;font-weight:800;font-size:.8rem;padding:9px 14px;cursor:pointer}
+.mp-btn-primary:hover{filter:brightness(1.08)}
+.mp-btn-danger{border:1px solid var(--red);border-radius:6px;background:#fff;color:var(--red);font-weight:800;font-size:.78rem;padding:8px 12px;cursor:pointer}
+.mp-btn-danger:hover{background:#fff2f3}
+.mp-plan-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--navy);margin:2px 0 4px}
+.mp-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}
+.mp-table-wrap table{width:100%;border-collapse:collapse;font-size:.82rem}
+.mp-table-wrap th{background:#f2f5f8;text-align:left;padding:8px 9px;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--line)}
+.mp-table-wrap td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+.mp-table-wrap tr:last-child td{border-bottom:0}
+.mp-table-wrap tr.mp-scaduta{background:#fdeaea}
+.mp-plan-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mp-plan-row input[type="text"]{font:inherit;font-size:.82rem;padding:6px 8px;border:1px solid #bcc9d4;border-radius:6px;background:#fff;color:var(--ink)}
+.mp-plan-row input[name="intervention"]{min-width:180px;flex:1}
+.mp-plan-row input[name="frequency"]{max-width:120px}
+.mp-plan-row input[type="date"]{font:inherit;font-size:.82rem;padding:5px 7px;border:1px solid #bcc9d4;border-radius:6px}
+.mp-plan-empty{color:var(--muted);padding:8px 2px;font-size:.82rem}
+.mp-new-plan-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.mp-new-plan-row input[type="text"]{font:inherit;font-size:.82rem;padding:8px 9px;border:1px solid #bcc9d4;border-radius:6px}
+.mp-new-plan-row input[name="intervention"]{min-width:180px;flex:1}
+.mp-new-plan-row input[name="frequency"]{max-width:150px}
+.mp-new-plan-row input[type="date"]{font:inherit;font-size:.82rem;padding:7px 8px;border:1px solid #bcc9d4;border-radius:6px}
+.mp-btn-success{border:0;border-radius:6px;background:var(--green);color:#fff;font-weight:800;font-size:.78rem;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.mp-btn-success:hover{filter:brightness(1.08)}
+@media(max-width:700px){.mp-form-grid,.mp-edit-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="intro">
+  <p class="eyebrow">SISTEMA QUALITÀ · MANUTENZIONE</p>
+  <h1>Piano di manutenzione</h1>
+  <p class="muted">Ogni riga è una voce di piano: la settimana in cui va fatta e, se l'operatore l'ha registrata scegliendola dal <a href="{{ url_for('sgq.registra_manutenzione') }}">Registro interventi</a>, quando e da chi è stata eseguita davvero.</p>
+</div>
+
+{% if righe_piano %}
+<div class="pp-toolbar">
+  <input type="text" id="pp-search" placeholder="Cerca per macchina, reparto o intervento…">
+  <div class="pp-toolbar-row">
+    <span class="pp-toolbar-label">Reparto</span>
+    <span class="pp-chip active" data-value="all">Tutti</span>
+    {% for reparto in macchine_per_reparto.keys() %}<span class="pp-chip" data-value="{{ reparto }}">{{ reparto }}</span>{% endfor %}
+    <label class="pp-toggle-solo"><input type="checkbox" id="pp-solo-da-fare"> Solo da eseguire</label>
+    <span class="pp-count" id="pp-count"></span>
+  </div>
+</div>
+
+<div class="pp-table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Reparto</th><th>Macchina</th><th>Intervento</th><th>Frequenza</th>
+        <th>Settimana</th><th>Scadenza</th><th>Eseguito</th><th>Data esecuzione</th><th>Chi</th>
+      </tr>
+    </thead>
+    <tbody id="pp-tbody">
+      {% for r in righe_piano %}
+      <tr class="{{ 'pp-scaduta' if r.scaduta and not r.eseguito }} {{ 'pp-inactive' if not r.machine_active }}"
+          data-reparto="{{ r.reparto }}" data-eseguito="{{ '1' if r.eseguito else '0' }}"
+          data-search="{{ (r.macchina ~ ' ' ~ r.reparto ~ ' ' ~ r.intervento)|lower }}">
+        <td>{{ r.reparto }}</td>
+        <td>{{ r.macchina }}</td>
+        <td>{{ r.intervento }}</td>
+        <td>{{ r.frequenza }}</td>
+        <td>{{ r.settimana }}</td>
+        <td>{{ r.scadenza.strftime('%d/%m/%Y') if r.scadenza else '—' }}</td>
+        <td>{% if r.eseguito %}<span class="pp-badge-si">✅ Eseguito</span>{% else %}<span class="pp-badge-no {{ 'pp-badge-scaduta' if r.scaduta }}">⬜ {{ 'Scaduto' if r.scaduta else 'Da fare' }}</span>{% endif %}</td>
+        <td>{{ r.esec_data or '—' }}</td>
+        <td>{{ r.esec_chi or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<section class="card"><p class="empty">Nessuna voce di piano attiva: aggiungine una dalla sezione "Gestione macchine" qui sotto.</p></section>
+{% endif %}
+
+<div class="pp-manage-toggle">
+  <button type="button" class="mp-btn-primary" onclick="document.getElementById('pp-manage').classList.toggle('pp-open')">⚙️ Gestione macchine e voci di piano</button>
+</div>
+
+<div class="pp-manage-section" id="pp-manage">
+  <button type="button" class="mp-btn-primary" style="margin-bottom:18px" onclick="document.getElementById('mp-new-card').classList.toggle('mp-open')">➕ Nuova macchina/attrezzatura</button>
+  <section class="mp-machine-card mp-new-card" id="mp-new-card" style="--accent:var(--green)">
+    <h3 style="margin:0 0 14px">Nuova macchina/attrezzatura</h3>
+    <form method="post" action="{{ url_for('sgq.nuova_macchina') }}" class="mp-form-grid">
+      <input type="text" name="code" placeholder="Codice (es. SP 02) *" required>
+      <input type="text" name="name" placeholder="Nome/descrizione *" required>
+      <input type="text" name="category" placeholder="Categoria (es. Saldopuntatrice, Robot, Dima)">
+      <input type="text" name="area" placeholder="Reparto/locazione">
+      <input type="text" name="manufacturer" placeholder="Costruttore">
+      <input type="text" name="responsible" placeholder="Responsabile manutenzione">
+      <button type="submit" class="mp-btn-primary">Aggiungi macchina</button>
+    </form>
+  </section>
+
+  {% if macchine %}
+  <div class="mp-toolbar">
+    <input type="text" id="mp-search" placeholder="Cerca per codice, nome o reparto…">
+    <div class="mp-toolbar-row">
+      <span class="mp-toolbar-label">Reparto</span>
+      <span class="mp-chip active" data-filter="reparto" data-value="all">Tutti</span>
+      {% for reparto in macchine_per_reparto.keys() %}<span class="mp-chip" data-filter="reparto" data-value="{{ reparto }}">{{ reparto }}</span>{% endfor %}
+    </div>
+    <div class="mp-toolbar-row">
+      <span class="mp-toolbar-label">Categoria</span>
+      <span class="mp-chip active" data-filter="categoria" data-value="all">Tutte</span>
+      {% for cat in categorie %}<span class="mp-chip" data-filter="categoria" data-value="{{ cat }}">{{ cat }}</span>{% endfor %}
+      <span class="mp-count" id="mp-count"></span>
+    </div>
+  </div>
+
+  {% for reparto, lista in macchine_per_reparto.items() %}
+  <div class="mp-reparto-section" data-reparto-block="{{ reparto }}">
+    <div class="mp-reparto-head"><h2>{{ reparto }}</h2><span class="mp-n">{{ lista|length }} macchin{{ 'a' if lista|length == 1 else 'e' }}</span></div>
+    <div class="mp-grid">
+      {% for m in lista %}
+      {% set attive_piano = m.plan_items|selectattr('active')|list %}
+      <div class="mp-machine-card {{ 'mp-inactive' if not m.active }}" style="--accent:{{ colore_categoria(m.category) }}"
+           data-search="{{ (m.code ~ ' ' ~ m.name ~ ' ' ~ reparto ~ ' ' ~ (m.category or ''))|lower }}"
+           data-reparto="{{ reparto }}" data-categoria="{{ m.category or '' }}">
+        <div class="mp-card-top">
+          <span class="mp-codice">{{ m.code }}</span>
+          {% if not m.active %}<span class="mp-tag-off">Disattivata</span>{% endif %}
+        </div>
+        <p class="mp-nome">{{ m.name }}</p>
+        <div class="mp-categoria">{{ m.category or 'Senza categoria' }}</div>
+        <div class="mp-card-foot">
+          {% if attive_piano %}
+            <span class="mp-freq-pill"><span class="mp-dot"></span>{{ attive_piano[0].frequency or 'Programmata' }}</span>
+          {% else %}
+            <span class="mp-freq-pill mp-freq-none"><span class="mp-dot"></span>Da programmare</span>
+          {% endif %}
+          <div style="display:flex;gap:6px">
+            <button type="button" class="mp-btn-ghost" onclick="mpToggle('mp-edit-{{ m.id }}')">✏️ Modifica</button>
+            <button type="button" class="mp-btn-ghost" onclick="mpToggle('mp-plan-{{ m.id }}')">📋 Piano{% if m.plan_items %} ({{ m.plan_items|length }}){% endif %}</button>
+          </div>
+        </div>
+
+        <div class="mp-panel" id="mp-edit-{{ m.id }}">
+          <form method="post" action="{{ url_for('sgq.salva_macchina', machine_id=m.id) }}">
+            <div class="mp-edit-grid">
+              <input type="text" name="name" value="{{ m.name }}" placeholder="Nome">
+              <input type="text" name="category" value="{{ m.category or '' }}" placeholder="Categoria">
+              <input type="text" name="area" value="{{ m.area or '' }}" placeholder="Reparto/locazione">
+              <input type="text" name="manufacturer" value="{{ m.manufacturer or '' }}" placeholder="Costruttore">
+              <input type="text" name="responsible" value="{{ m.responsible or '' }}" placeholder="Responsabile">
+              <label class="mp-check"><input type="checkbox" name="active" {% if m.active %}checked{% endif %}> Attiva</label>
+            </div>
+            <div class="mp-actions-row" style="margin-top:8px">
+              <button type="submit" class="mp-btn-primary">Salva</button>
+            </div>
+          </form>
+          <form method="post" action="{{ url_for('sgq.elimina_macchina', machine_id=m.id) }}" onsubmit="return confirm('Eliminare {{ m.code }} e tutto il piano/registro interventi collegato?');">
+            <button type="submit" class="mp-btn-danger">🗑 Elimina macchina</button>
+          </form>
+        </div>
+
+        <div class="mp-panel" id="mp-plan-{{ m.id }}">
+          <p class="mp-plan-title">Piano manutenzione programmata</p>
+          {% if m.plan_items %}
+          <div class="mp-table-wrap"><table>
+            <thead><tr><th>Intervento</th><th>Frequenza</th><th>Prossima scadenza</th><th>Attiva</th><th></th></tr></thead>
+            <tbody>
+            {% for p in m.plan_items %}
+            <tr class="{{ 'mp-scaduta' if (p.next_due and p.next_due < oggi and p.active) }}">
+              <td colspan="5">
+                <form method="post" action="{{ url_for('sgq.salva_piano_manutenzione', item_id=p.id) }}" class="mp-plan-row">
+                  <input type="text" name="intervention" value="{{ p.intervention }}">
+                  <input type="text" name="frequency" value="{{ p.frequency or '' }}" placeholder="Frequenza">
+                  <input type="date" name="next_due" value="{{ p.next_due.isoformat() if p.next_due else '' }}">
+                  <label class="mp-check" style="grid-column:auto"><input type="checkbox" name="active" {% if p.active %}checked{% endif %}> Attiva</label>
+                  <button type="submit" class="mp-btn-ghost">Salva</button>
+                </form>
+                <form method="post" action="{{ url_for('sgq.elimina_piano_manutenzione', item_id=p.id) }}" onsubmit="return confirm('Eliminare questa voce di piano?');" style="display:inline">
+                  <button type="submit" class="mp-btn-danger" style="padding:5px 9px">🗑</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table></div>
+          {% else %}<p class="mp-plan-empty">Nessuna voce di piano per questa macchina.</p>{% endif %}
+
+          <form method="post" action="{{ url_for('sgq.nuovo_piano_manutenzione', machine_id=m.id) }}" class="mp-new-plan-row">
+            <input type="text" name="intervention" placeholder="Nuovo intervento programmato" required>
+            <input type="text" name="frequency" placeholder="Frequenza (es. Semestrale)">
+            <input type="date" name="next_due">
+            <button type="submit" class="mp-btn-success">➕ Aggiungi al piano</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <section class="card"><p class="empty">Nessuna macchina censita.</p></section>
+  {% endif %}
+</div>
+
+<script>
+// ---- filtri tabella piano ----
+let ppState = {reparto:'all', query:'', soloDaFare:false};
+function ppApplyFilters(){
+  const q = ppState.query.trim().toLowerCase();
+  let visibili = 0, totali = 0;
+  document.querySelectorAll('#pp-tbody tr').forEach(row => {
+    totali++;
+    const repOk = ppState.reparto === 'all' || row.dataset.reparto === ppState.reparto;
+    const qOk = !q || row.dataset.search.includes(q);
+    const daFareOk = !ppState.soloDaFare || row.dataset.eseguito === '0';
+    const show = repOk && qOk && daFareOk;
+    row.style.display = show ? '' : 'none';
+    if(show) visibili++;
+  });
+  const countEl = document.getElementById('pp-count');
+  if(countEl) countEl.textContent = visibili + ' / ' + totali + ' voci di piano';
+}
+document.querySelectorAll('.pp-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.pp-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    ppState.reparto = chip.dataset.value;
+    ppApplyFilters();
+  });
+});
+const ppSearchInput = document.getElementById('pp-search');
+if(ppSearchInput) ppSearchInput.addEventListener('input', e => { ppState.query = e.target.value; ppApplyFilters(); });
+const ppSoloDaFare = document.getElementById('pp-solo-da-fare');
+if(ppSoloDaFare) ppSoloDaFare.addEventListener('change', e => { ppState.soloDaFare = e.target.checked; ppApplyFilters(); });
+ppApplyFilters();
+
+// ---- gestione macchine (collassabile) ----
+function mpToggle(id){
+  document.getElementById(id).classList.toggle('mp-open');
+}
+let mpState = {reparto:'all', categoria:'all', query:''};
+function mpApplyFilters(){
+  const q = mpState.query.trim().toLowerCase();
+  let visibili = 0, totali = 0;
+  document.querySelectorAll('.mp-machine-card[data-search]').forEach(card => {
+    totali++;
+    const repOk = mpState.reparto === 'all' || card.dataset.reparto === mpState.reparto;
+    const catOk = mpState.categoria === 'all' || card.dataset.categoria === mpState.categoria;
+    const qOk = !q || card.dataset.search.includes(q);
+    const show = repOk && catOk && qOk;
+    card.style.display = show ? '' : 'none';
+    if(show) visibili++;
+  });
+  document.querySelectorAll('.mp-reparto-section').forEach(sec => {
+    const anyVisible = [...sec.querySelectorAll('.mp-machine-card')].some(c => c.style.display !== 'none');
+    sec.style.display = anyVisible ? '' : 'none';
+  });
+  const countEl = document.getElementById('mp-count');
+  if(countEl) countEl.textContent = visibili + ' / ' + totali + ' macchine';
+}
+document.querySelectorAll('.mp-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const filtro = chip.dataset.filter;
+    document.querySelectorAll(`.mp-chip[data-filter="${filtro}"]`).forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    mpState[filtro] = chip.dataset.value;
+    mpApplyFilters();
+  });
+});
+const mpSearchInput = document.getElementById('mp-search');
+if(mpSearchInput){
+  mpSearchInput.addEventListener('input', e => { mpState.query = e.target.value; mpApplyFilters(); });
+}
+mpApplyFilters();
+</script>
+{% endblock %}
