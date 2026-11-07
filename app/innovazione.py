@@ -10,14 +10,16 @@ innovazione, valutazione delle prestazioni, miglioramento. Qui diventano:
 4) Indicatori del sistema (§9.1)
 5) Autovalutazione di maturità per capitolo (§9.2-9.3, §10)
 """
+import hmac
+import secrets
 from collections import Counter
 from datetime import date
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for, session
 from flask_login import current_user, login_required
 
 from .extensions import db
-from .models import InnovationGate, InnovationIdea, InnovationMaturity, InnovationProject, InnovationStrategy
+from .models import InnovationGate, InnovationIdea, InnovationMaturity, InnovationProject, InnovationStrategy, InnovationComplianceReview
 
 innovazione_bp = Blueprint("innovazione", __name__, url_prefix="/innovazione")
 
@@ -386,3 +388,71 @@ def maturita():
                            precedente=precedente, storico=storico, capitoli=medie_capitoli(ultima),
                            capitoli_prec=medie_capitoli(precedente) if precedente else None, media=_media_maturita(ultima),
                            media_fn=_media_maturita)
+
+
+# ------------------------------------------------------------------ ISO 56001: laboratorio di evidenze
+# I seguenti sono temi didattici sintetici; NON citazioni dei requisiti della norma.
+# Per un giudizio occorre aggiungere il riferimento verificato nella norma ufficiale.
+ISO56001_TEMI = [
+    ("4", "Contesto e perimetro", "Definisci organizzazione, bisogno, attori e limiti del sistema.",
+     "Analisi del contesto approvata, perimetro e parti interessate."),
+    ("5", "Leadership e politica", "Spiega come la direzione guida l'innovazione e alloca responsabilità.",
+     "Politica, mandato, ruoli e prova di comunicazione."),
+    ("6", "Pianificazione", "Collega opportunità, rischi e obiettivi a risorse e portafoglio.",
+     "Obiettivi misurabili, budget, priorità e scadenze."),
+    ("7", "Supporti e competenze", "Verifica tempo, persone, conoscenze, strumenti e protezione del know-how.",
+     "Piano competenze, disponibilità risorse e regole di accesso."),
+    ("8", "Attività operative", "Ricostruisci opportunità, concept, prove, sviluppo e adozione.",
+     "Gate con evidenze e decisioni, inclusi eventuali stop motivati."),
+    ("9", "Valutazione delle prestazioni", "Esamina KPI, audit e analisi del management.",
+     "Report KPI e verbali di verifica, con dati e fonti."),
+    ("10", "Miglioramento", "Distingui una prova fallita da un difetto del sistema.",
+     "Lezioni apprese, trattamento dei rilievi e controllo di efficacia."),
+]
+
+
+@innovazione_bp.route("/iso56001", methods=["GET", "POST"])
+@login_required
+def iso56001():
+    """Gap-assessment DIDATTICO: nessuna certificazione e nessun verdetto automatico."""
+    owner_only()
+    if "_iso56001_csrf" not in session:
+        session["_iso56001_csrf"] = secrets.token_urlsafe(24)
+    if request.method == "POST":
+        token = request.form.get("_csrf", "")
+        if not token or not hmac.compare_digest(token, session["_iso56001_csrf"]):
+            abort(400, description="Richiesta non valida; ricarica il modulo.")
+        scope = request.form.get("scope", "").strip()
+        if len(scope) < 12 or len(scope) > 250:
+            flash("Descrivi il perimetro del sistema in almeno 12 caratteri.", "error")
+            return redirect(url_for(".iso56001"))
+        results, errors = {}, []
+        for cap, nome, descrizione, prova in ISO56001_TEMI:
+            ref = request.form.get("ref_" + cap, "").strip()[:90]
+            evidence = request.form.get("evidence_" + cap, "").strip()[:1500]
+            reasoning = request.form.get("reasoning_" + cap, "").strip()[:1000]
+            judgement = request.form.get("judgement_" + cap, "da_verificare")
+            action = request.form.get("action_" + cap, "").strip()[:500]
+            owner = request.form.get("owner_" + cap, "").strip()[:100]
+            if judgement not in ("conforme", "non_conforme", "da_verificare"):
+                abort(400)
+            if judgement != "da_verificare" and (not ref or len(evidence) < 15 or len(reasoning) < 15):
+                errors.append(f"Capitolo {cap}: per esprimere un giudizio devi indicare riferimento ufficiale, evidenza e motivazione (almeno 15 caratteri).")
+            results[cap] = dict(reference=ref, evidence=evidence, judgement=judgement,
+                                reasoning=reasoning, action=action, owner=owner)
+        if errors:
+            flash(" ".join(errors), "error")
+            return redirect(url_for(".iso56001"))
+        entry = InnovationComplianceReview(
+            assessor=current_user.name, scope=scope[:250], results=results,
+            summary=request.form.get("summary", "").strip()[:1500])
+        db.session.add(entry)
+        db.session.commit()
+        flash(f"Valutazione didattica #{entry.id} salvata. Non costituisce attestazione di conformità.", "success")
+        return redirect(url_for(".iso56001", review_id=entry.id))
+    id_requested = request.args.get("review_id", type=int)
+    review = db.session.get(InnovationComplianceReview, id_requested) if id_requested else None
+    recenti = InnovationComplianceReview.query.order_by(
+        InnovationComplianceReview.created_at.desc(), InnovationComplianceReview.id.desc()).limit(10).all()
+    return render_template("innovazione/iso56001.html", temi=ISO56001_TEMI, review=review,
+                           recenti=recenti, csrf=session["_iso56001_csrf"])
