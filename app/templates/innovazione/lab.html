@@ -27,8 +27,8 @@
 <p>{{ s.question }}</p><small>Obiettivo: {{ s.strategic_goal }} · idee collegate: {{ s.ideas|length }}</small>
 <form method="post" action="{{ url_for('innovation_lab.associa_idea', challenge_id=s.id) }}" class="form-grid">
 <input type="hidden" name="_csrf" value="{{ token }}">
-<label>Codice numerico dell'idea già presente in «Idee» (ID database)
-<input type="number" min="1" name="idea_id" required placeholder="ID dell'idea"></label>
+<label>Seleziona un'idea già registrata nel gestionale
+<select name="idea_id" required><option value="">Scegli un'idea</option>{% for idea in idee_disponibili %}<option value="{{ idea.id }}">{{ idea.code or ('#' ~ idea.id) }} · {{ idea.title }}</option>{% endfor %}</select></label>
 <div style="align-self:end"><button class="btn">Associa idea esistente</button></div>
 </form>
 </div>{% endfor %}{% endif %}
