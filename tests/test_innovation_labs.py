@@ -1,6 +1,21 @@
 """Regressioni del laboratorio avanzato 56002/56001 (modelli originali Flask)."""
 from datetime import date, timedelta
 
+import pytest
+from app import create_app
+from app.config import Config
+
+class LabTestConfig(Config):
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
+    TESTING = True
+    UPLOAD_FOLDER = "/tmp/master-iso-lab-test"
+
+@pytest.fixture()
+def client():
+    app = create_app(LabTestConfig)
+    with app.app_context(), app.test_client() as c:
+        yield c
+
 from app.innovation_lab import evaluate_criteria
 from app.models import (
     InnovationChallenge, InnovationChallengeIdea, InnovationCorrectiveAction,
@@ -41,8 +56,6 @@ def test_coverage_distinta_dallo_scoring():
 
 
 def test_laboratori_accessi_database_and_action(client):
-    # Riusa il fixture 'client' del test_suite se esposto via conftest.
-    from flask import session
     assert client.get("/innovazione/lab/").status_code in (302, 401)
     assert client.post("/auth/login", data={"pin": "1234"}).status_code in (302, 303)
     assert client.get("/innovazione/lab/").status_code == 403
