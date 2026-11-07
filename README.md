@@ -27,3 +27,15 @@ python -m pytest -q
 Su Railway: servizio PostgreSQL (`DATABASE_URL`), `SECRET_KEY`, un Volume montato in `/data` con `UPLOAD_FOLDER=/data/documenti`. Le bozze con AI del riesame e della relazione VSME usano `ANTHROPIC_API_KEY`, se presente.
 
 © Maurizio Gustinicchi Consulting
+
+
+## Laboratorio didattico ISO 56001:2024
+
+Il gestionale contiene il percorso **Innovazione → Laboratorio ISO 56001** (`/innovazione/iso56001`), distinto dall'autovalutazione di maturità ISO 56002.
+
+- Valuta sette temi, organizzati secondo la struttura dei capitoli 4–10, con un riferimento alla norma ufficiale da indicare manualmente per ogni giudizio.
+- Per classificare un tema come conforme o non conforme richiede un riferimento, un'evidenza documentata e una motivazione, e salva le risposte in PostgreSQL tramite il modello `InnovationComplianceReview`.
+- Mostra lo storico delle valutazioni formative, le lacune e le azioni proposte, da usare come base per il riesame di direzione.
+- Non certifica automaticamente la conformità e **non contiene il testo normativo ISO**.
+
+I documenti riscritti per il corso Master Campus Academy sono consegnati in un archivio separato; non sono inclusi automaticamente nel deployment del gestionale. L'attivazione pubblica e l'esperienza dell'allievo richiedono collaudo e verifica del deploy.
