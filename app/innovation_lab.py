@@ -122,12 +122,13 @@ def index():
     progetti = InnovationProject.query.order_by(InnovationProject.created_at.desc()).all()
     recensioni = InnovationGateReview.query.order_by(InnovationGateReview.created_at.desc()).limit(12).all()
     azioni = InnovationCorrectiveAction.query.order_by(InnovationCorrectiveAction.created_at.desc()).all()
+    idee_disponibili = InnovationIdea.query.order_by(InnovationIdea.id.desc()).all()
     by_horizon = Counter(p.horizon for p in progetti if p.status in ("attivo", "sospeso"))
     budget = sum(Decimal(str(p.budget or 0)) for p in progetti if p.status in ("attivo", "sospeso"))
     return render_template(
         "innovazione/lab.html", token=_token(), sfide=sfide, progetti=progetti,
         recensioni=recensioni, azioni=azioni, criteria=CRITERIA, kinds=KINDS,
-        budget=budget, by_horizon=by_horizon,
+        budget=budget, by_horizon=by_horizon, idee_disponibili=idee_disponibili,
     )
 
 
