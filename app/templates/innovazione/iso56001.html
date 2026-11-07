@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Laboratorio ISO 56001 · audit didattico{% endblock %}
+{% block content %}
+<div class="intro">
+  <p class="eyebrow">MASTER INNOVATION MANAGEMENT · ISO 56002 + ISO 56001:2024</p>
+  <h1>Dal sistema di gestione alle evidenze ISO 56001</h1>
+  <p class="muted">Laboratorio guidato per verificare il sistema di gestione dell'innovazione: non è un audit di certificazione e non sostituisce la norma ufficiale.</p>
+</div>
+{% include 'innovazione/_nav.html' %}
+<section class="card">
+  <h2>Come svolgere il laboratorio</h2>
+  <ol>
+    <li><b>Spiegazione.</b> Leggi l'argomento e il motivo della verifica.</li>
+    <li><b>Ricerca.</b> Apri le funzioni esistenti del gestionale: strategia, idee, progetti, gate, KPI e maturità.</li>
+    <li><b>Riferimento.</b> Consulta la tua copia autorizzata ISO 56001:2024 e indica il requisito preciso da valutare.</li>
+    <li><b>Evidenza.</b> Descrivi documento, identificativo, data e dato osservato; non basta segnare una casella.</li>
+    <li><b>Giudizio e correzione.</b> Motiva la conclusione, indica una eventuale azione e salva. Il sistema blocca i giudizi privi di evidenze.</li>
+    <li><b>Riesame.</b> Usa il rapporto salvato per preparare un riesame della direzione e un piano di miglioramento.</li>
+  </ol>
+  <p class="muted">Un punteggio di maturità ISO 56002 non equivale a un giudizio di conformità ISO 56001. Un esperimento che non riesce non è automaticamente una non conformità.</p>
+</section>
+{% if review %}
+<section class="card" style="margin-top:18px">
+  <h2>Rapporto didattico #{{ review.id }}</h2>
+  <p><strong>Valutatore:</strong> {{ review.assessor }} · <strong>Data:</strong> {{ review.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+  <p><strong>Perimetro:</strong> {{ review.scope }}</p>
+  <p><b>Conclusione:</b> {{ review.summary or 'Non indicata' }}</p>
+  <div style="overflow-x:auto">
+  <table class="maturity"><thead><tr><th>Tema</th><th>Riferimento indicato</th><th>Evidenza</th><th>Esito simulato</th><th>Motivazione</th><th>Azione / owner</th></tr></thead><tbody>
+  {% for cap, name, desc, expected in temi %}
+  {% set item = review.results.get(cap, {}) %}
+  <tr><td>{{ cap }} · {{ name }}</td><td>{{ item.get('reference','—') }}</td><td>{{ item.get('evidence','—') }}</td>
+  <td>{{ {'conforme':'Conforme (valutazione allievo)','non_conforme':'Non conforme (valutazione allievo)','da_verificare':'Da verificare'}.get(item.get('judgement'), '—') }}</td>
+  <td>{{ item.get('reasoning','—') }}</td><td>{{ item.get('action','—') }} · {{ item.get('owner','—') }}</td></tr>
+  {% endfor %}</tbody></table></div>
+  <p class="muted">Le conclusioni sono dichiarazioni formative dell'allievo, non conferme automatiche della norma né certificazioni.</p>
+</section>
+{% endif %}
+<section class="card" style="margin-top:18px">
+<h2>Nuova verifica documentata</h2>
+<form method="post">
+<input type="hidden" name="_csrf" value="{{ csrf }}">
+<div class="form-grid"><label class="span2">Perimetro dell'Innovation Management System
+<input required minlength="12" maxlength="250" name="scope" placeholder="Quali processi, reparti, siti e iniziative comprende la valutazione?"></label></div>
+{% for cap, name, explain, proof in temi %}
+<fieldset style="border:1px solid #d1e2ec;border-radius:12px;padding:16px;margin:18px 0">
+  <legend style="font-weight:bold;padding:0 8px">Capitolo {{ cap }} · {{ name }}</legend>
+  <p><b>Cosa verificare:</b> {{ explain }}</p>
+  <p class="muted"><b>Esempio di prova:</b> {{ proof }}</p>
+  <div class="form-grid">
+    <label>Riferimento verificato nella norma ufficiale
+      <input name="ref_{{ cap }}" maxlength="90" placeholder="Indica il punto verificato nella tua copia"></label>
+    <label>Valutazione formativa
+      <select name="judgement_{{ cap }}"><option value="da_verificare">Evidenza da verificare</option><option value="conforme">Conforme (da motivare)</option><option value="non_conforme">Non conforme (da motivare)</option></select></label>
+    <label class="span2">Evidenza concreta: ID, data, informazione osservata
+      <textarea name="evidence_{{ cap }}" rows="3" maxlength="1500" placeholder="Es. Strategia 2026, revisione 2, approvazione del 12/09, obiettivi A-B..."></textarea></label>
+    <label class="span2">Perché l'evidenza sostiene il tuo giudizio?
+      <textarea name="reasoning_{{ cap }}" rows="2" maxlength="1000" placeholder="Spiega il confronto fra criterio e dato. Non è sufficiente: tutto OK."></textarea></label>
+    <label>Azione o prova ancora da acquisire
+      <input name="action_{{ cap }}" maxlength="500" placeholder="Correzione, test, documento o colloquio"></label>
+    <label>Responsabile del seguito
+      <input name="owner_{{ cap }}" maxlength="100" placeholder="Nome o ruolo"></label>
+  </div>
+</fieldset>
+{% endfor %}
+<div class="form-grid">
+<label class="span2">Riepilogo delle priorità e del prossimo riesame
+  <textarea name="summary" rows="4" maxlength="1500" placeholder="Principali lacune, opportunità e decisioni della direzione"></textarea></label>
+</div>
+<button type="submit" class="btn primary">Salva valutazione ed evidenze</button>
+</form></section>
+{% if recenti %}
+<section class="card" style="margin-top:18px"><h2>Storico delle verifiche formative</h2><ul>
+{% for a in recenti %}<li><a href="{{ url_for('innovazione.iso56001', review_id=a.id) }}">Valutazione #{{ a.id }}</a> · {{ a.created_at.strftime('%d/%m/%Y') }} · {{ a.scope }}</li>{% endfor %}
+</ul></section>
+{% endif %}
+{% endblock %}
