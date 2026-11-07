@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Gate Intelligence · {{ project.code }}{% endblock %}
+{% block content %}
+<div class="intro">
+<p class="eyebrow">ISO 56002 + 56001 · LABORATORIO DI DECISIONE DOCUMENTATA</p>
+<h1>Gate Intelligence — {{ project.code }}</h1>
+<p class="muted">{{ project.title }} · fase corrente {{ project.stage }} · valutazione autonoma e non vincolante</p>
+</div>
+{% include 'innovazione/_nav.html' %}
+<section class="card">
+<h2>Il tutor: cosa fare e perché</h2>
+<ol>
+<li>Per ogni criterio valuta il progetto su una scala <b>0–5</b>. Il punteggio esprime una preferenza, non la probabilità che il progetto riesca.</li>
+<li>Assegna la solidità della prova <b>0–3</b> e cita la fonte: esperimento, prova pilota, intervista o calcolo.</li>
+<li>Se esiste un vincolo autenticamente inderogabile, seleziona <b>«Vincolo bloccante»</b> e stabilisci una soglia esplicita. Nessuna media potrà compensarlo.</li>
+<li>Definisci una prossima prova limitata in tempo e spesa. Il sistema fornisce una raccomandazione, <b>ma non fa avanzare automaticamente il progetto</b>.</li>
+<li>Il responsabile prende la decisione effettiva nel normale registro Stage-Gate, registrando le evidenze.</li>
+</ol>
+</section>
+<section class="card" style="margin-top:18px">
+<h2>Valuta la prossima decisione</h2>
+<form method="post" class="form-grid">
+<input type="hidden" name="_csrf" value="{{ token }}">
+{% for key,name,weight in criteria %}
+<fieldset class="span2" style="border:1px solid #d4e3ee;border-radius:12px;padding:16px">
+<legend><strong>{{ name }} · peso {{ weight }}%</strong></legend>
+<div class="form-grid">
+<label>Punteggio 0–5<select name="score_{{ key }}" required>{% for i in range(0,6) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select></label>
+<label>Solidità evidenza 0–3<select name="evidence_{{ key }}" required><option value="0">0 — ipotesi senza prova</option><option value="1">1 — indicazione preliminare</option><option value="2">2 — prova parziale</option><option value="3">3 — evidenza verificabile</option></select></label>
+<label class="span2">Fonte e limiti dell'evidenza<input name="source_{{ key }}" maxlength="400" placeholder="Report sperimentazione X, data, campione, limiti"></label>
+<label><input name="must_{{ key }}" type="checkbox"> Vincolo inderogabile?</label>
+<label>Soglia minima se bloccante<select name="threshold_{{ key }}" required>{% for i in range(0,6) %}<option value="{{ i }}" {{ 'selected' if i==3 }}>{{ i }}</option>{% endfor %}</select></label>
+</div>
+</fieldset>
+{% endfor %}
+<label class="span2">Motivazione tecnica e dissensi<textarea name="rationale" rows="4" required minlength="20" maxlength="1500" placeholder="Perché la proposta merita (o non merita) ulteriori risorse? Quale incertezza è dominante?"></textarea></label>
+<label class="span2">Prossima sperimentazione verificabile<textarea name="next_experiment" rows="3" required minlength="20" maxlength="1000" placeholder="Azione, responsabile, misura, criterio di stop e conoscenza attesa"></textarea></label>
+<label>Massimo impegno economico (€)<input name="max_commitment" type="number" min="0" max="1000000000" step="0.01" required></label>
+<label>Data prossimo riesame<input name="next_review" type="date" required></label>
+<button class="btn primary span2">Salva valutazione senza avanzare automaticamente il progetto</button>
+</form>
+</section>
+{% if reports %}
+<section class="card" style="margin-top:18px"><h2>Valutazioni precedenti e tracciabilità</h2>
+{% for r in reports %}
+<article style="border-top:1px solid #d4e3ee;padding:16px 0">
+<h3>Gate {{ r.stage }} · {{ r.created_at.strftime('%d/%m/%Y') }} · {{ r.assessor }}</h3>
+<p><b>Indice preferenze:</b> {{ (r.score*100)|round(0)|int }}% · <b>Copertura documentale:</b> {{ (r.evidence_coverage*100)|round(0)|int }}% · <b>Risposta automatica:</b> {{ r.recommendation }}</p>
+{% if r.hard_blocks %}<p><strong>Vincoli non soddisfatti:</strong> {{ r.hard_blocks|join('; ') }}</p>{% endif %}
+<p><b>Motivazione:</b> {{ r.rationale }}</p>
+<p><b>Prossima prova:</b> {{ r.next_experiment }}</p>
+<p><b>Limite spesa:</b> € {{ r.max_commitment }} · <b>Riesame:</b> {{ r.next_review.strftime('%d/%m/%Y') }}</p>
+<details><summary>Apri criteri, punteggi ed evidenze</summary>
+<ul>{% for item in r.criteria %}<li><strong>{{ item.key }}</strong> · voto {{ item.score }}/5 · prova {{ item.evidence }}/3 · soglia {{ item.threshold }}{% if item.must_pass %} <b>VINCOLO</b>{% endif %} — {{ item.source or 'Nessuna fonte' }}</li>{% endfor %}</ul>
+</details>
+</article>
+{% endfor %}</section>
+{% endif %}
+<p style="margin:22px 0"><a class="btn" href="{{ url_for('innovazione.progetto', project_id=project.id) }}">Torna al progetto e al registro delle decisioni Stage-Gate</a></p>
+{% endblock %}
