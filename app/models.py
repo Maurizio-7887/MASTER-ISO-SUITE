@@ -681,6 +681,19 @@ class InnovationMaturity(db.Model):
     summary = db.Column(db.Text, nullable=True)
 
 
+class InnovationComplianceReview(db.Model):
+    """Registro delle verifiche formative ISO 56001; non sostituisce un audit accreditato."""
+    __tablename__ = "innovation_compliance_review"
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    assessor = db.Column(db.String(150), nullable=False)
+    scope = db.Column(db.String(250), nullable=False)
+    results = db.Column(db.JSON, nullable=False, default=dict)
+    summary = db.Column(db.Text, nullable=True)
+    # results: {capitolo: {reference, evidence, judgement, reasoning, action, owner}}
+    # Riferimento normativo inserito e verificato dall'allievo sulla propria copia ufficiale.
+
+
 # ============================================ ISO 14001 · ISO 45001 · SA8000 ==
 class MgmtRisk(db.Model):
     """Aspetto ambientale (14001), pericolo (45001) o rischio sociale (SA8000), valutato P × G (1-4)."""
