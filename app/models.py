@@ -694,6 +694,64 @@ class InnovationComplianceReview(db.Model):
     # Riferimento normativo inserito e verificato dall'allievo sulla propria copia ufficiale.
 
 
+class InnovationChallenge(db.Model):
+    """Sfida tematica di ideazione; modello nativo ispirato ai flussi di OpenideaL, nessun codice copiato."""
+    __tablename__ = "innovation_challenge"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(180), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    strategic_goal = db.Column(db.String(250), nullable=False)
+    audience = db.Column(db.String(150), nullable=False, default="dipendenti")
+    deadline = db.Column(db.Date, nullable=True)
+    owner = db.Column(db.String(120), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="aperta")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    ideas = db.relationship("InnovationChallengeIdea", backref="challenge", lazy=True, cascade="all, delete-orphan")
+
+
+class InnovationChallengeIdea(db.Model):
+    """Collegamento idea-sfida senza alterare l'anagrafica storica delle idee."""
+    __tablename__ = "innovation_challenge_idea"
+    id = db.Column(db.Integer, primary_key=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("innovation_challenge.id"), nullable=False, index=True)
+    idea_id = db.Column(db.Integer, db.ForeignKey("innovation_idea.id"), nullable=False, index=True, unique=True)
+
+
+class InnovationGateReview(db.Model):
+    """Analisi decisionale distinta dal gate effettivo; nessuna approvazione automatica."""
+    __tablename__ = "innovation_gate_review"
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("innovation_project.id"), nullable=False, index=True)
+    stage = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    assessor = db.Column(db.String(120), nullable=False)
+    criteria = db.Column(db.JSON, nullable=False)
+    score = db.Column(db.Float, nullable=False)
+    evidence_coverage = db.Column(db.Float, nullable=False)
+    hard_blocks = db.Column(db.JSON, nullable=False, default=list)
+    recommendation = db.Column(db.String(30), nullable=False)
+    rationale = db.Column(db.Text, nullable=False)
+    next_experiment = db.Column(db.Text, nullable=False)
+    max_commitment = db.Column(db.Numeric(12, 2), nullable=False)
+    next_review = db.Column(db.Date, nullable=False)
+
+
+class InnovationCorrectiveAction(db.Model):
+    """CAPA ISO 56001 didattica. Fallimento sperimentale != automaticamente non conformità."""
+    __tablename__ = "innovation_corrective_action"
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(30), nullable=False)
+    source = db.Column(db.String(150), nullable=False)
+    issue = db.Column(db.Text, nullable=False)
+    cause = db.Column(db.Text, nullable=False)
+    action = db.Column(db.Text, nullable=False)
+    owner = db.Column(db.String(120), nullable=False)
+    due_date = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(30), nullable=False, default="aperta")
+    effectiveness = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
 # ============================================ ISO 14001 · ISO 45001 · SA8000 ==
 class MgmtRisk(db.Model):
     """Aspetto ambientale (14001), pericolo (45001) o rischio sociale (SA8000), valutato P × G (1-4)."""

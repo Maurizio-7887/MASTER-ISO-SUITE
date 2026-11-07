@@ -27,13 +27,14 @@ def create_app(config=Config):
     from .auth.routes import auth_bp
     from .documents import documents_bp
     from .innovazione import innovazione_bp
+    from .innovation_lab import innovation_lab_bp
     from .quality_objectives import quality_objectives_bp
     from .risorse import risorse_bp
     from .sgq import sgq_bp
     from .sistemi import sistemi_bp
     from .vsme import vsme_bp
     from .vsme_report import vsme_report_bp
-    for bp in (auth_bp, documents_bp, innovazione_bp, quality_objectives_bp, risorse_bp, sgq_bp, sistemi_bp, vsme_bp, vsme_report_bp):
+    for bp in (auth_bp, documents_bp, innovazione_bp, innovation_lab_bp, quality_objectives_bp, risorse_bp, sgq_bp, sistemi_bp, vsme_bp, vsme_report_bp):
         app.register_blueprint(bp)
 
     @app.context_processor

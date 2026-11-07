@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Laboratori avanzati · ISO 56002 + 56001{% endblock %}
+{% block content %}
+<div class="intro">
+<p class="eyebrow">MASTER INNOVATION MANAGEMENT · LABORATORIO AVANZATO</p>
+<h1>Innovation Challenges, Portfolio e CAPA</h1>
+<p class="muted">Ogni esercitazione produce una registrazione persistente. Il tutor illustra cosa inserire e perché, mentre il docente verifica la qualità del ragionamento.</p>
+</div>
+{% include 'innovazione/_nav.html' %}
+<section class="card" style="margin-top:16px">
+<h2>1 · Innovation Challenge — costruire il funnel delle idee</h2>
+<p><b>Obiettivo:</b> invece di raccogliere idee casuali, formula una domanda legata a una priorità strategica. <b>Come:</b> premi «Crea sfida», quindi collega a essa un'idea già registrata nel modulo Idee.</p>
+<form action="{{ url_for('innovation_lab.crea_sfida') }}" method="post" class="form-grid">
+<input type="hidden" name="_csrf" value="{{ token }}">
+<label>Nome della sfida<input name="title" required minlength="5" maxlength="180" placeholder="Riduzione degli scarti di lavorazione"></label>
+<label>Responsabile della sfida<input name="owner" required minlength="5" maxlength="120" placeholder="Responsabile innovazione"></label>
+<label class="span2">Domanda per i partecipanti<textarea name="question" required minlength="5" maxlength="1500" placeholder="Quale soluzione riduce gli scarti senza peggiorare tempi e qualità?"></textarea></label>
+<label class="span2">Collegamento alla strategia<textarea name="strategic_goal" required minlength="5" maxlength="250" placeholder="Obiettivo strategico: dimezzare gli scarti entro il 2027"></textarea></label>
+<label>Termine per le proposte<input type="date" name="deadline"></label><div></div>
+<button class="btn primary span2">Crea sfida</button>
+</form>
+{% if sfide %}
+<h3>Sfide registrate e idee associate</h3>
+{% for s in sfide %}
+<div style="border-top:1px solid #d4e3ee;padding:12px 0">
+<strong>{{ s.title }}</strong> · {{ s.status }} · {{ s.owner }}{% if s.deadline %} · entro {{ s.deadline.strftime('%d/%m/%Y') }}{% endif %}
+<p>{{ s.question }}</p><small>Obiettivo: {{ s.strategic_goal }} · idee collegate: {{ s.ideas|length }}</small>
+<form method="post" action="{{ url_for('innovation_lab.associa_idea', challenge_id=s.id) }}" class="form-grid">
+<input type="hidden" name="_csrf" value="{{ token }}">
+<label>Seleziona un'idea già registrata nel gestionale
+<select name="idea_id" required><option value="">Scegli un'idea</option>{% for idea in idee_disponibili %}<option value="{{ idea.id }}">{{ idea.code or ('#' ~ idea.id) }} · {{ idea.title }}</option>{% endfor %}</select></label>
+<div style="align-self:end"><button class="btn">Associa idea esistente</button></div>
+</form>
+</div>{% endfor %}{% endif %}
+</section>
+<section class="card" style="margin-top:18px">
+<h2>2 · Innovation Portfolio — bilanciare risorse e orizzonti</h2>
+<p><b>Obiettivo:</b> valutare se i fondi vanno solo ai miglioramenti del presente o anche a iniziative più lontane. I dati provengono direttamente dai progetti registrati.</p>
+<p><strong>Budget dei progetti attivi o sospesi:</strong> € {{ '{:,.0f}'.format(budget).replace(',', '.') }}</p>
+<table class="maturity"><thead><tr><th>Orizzonte</th><th>Numero iniziative</th><th>Domanda da porre</th></tr></thead><tbody>
+<tr><td>Incrementale / Core</td><td>{{ by_horizon.get('incrementale',0) }}</td><td>Stiamo migliorando il business attuale?</td></tr>
+<tr><td>Adiacente</td><td>{{ by_horizon.get('adiacente',0) }}</td><td>Stiamo entrando in nuovi mercati o applicazioni?</td></tr>
+<tr><td>Radicale / trasformativo</td><td>{{ by_horizon.get('radicale',0) }}</td><td>Stiamo preparando opportunità future?</td></tr>
+</tbody></table>
+<h3>Valutazioni Gate con qualità delle evidenze</h3>
+{% for p in progetti %}
+<p><b>{{ p.code }} · {{ p.title }}</b> — fase {{ p.stage }}, {{ p.horizon }}
+<a href="{{ url_for('innovation_lab.valuta_gate', project_id=p.id) }}">Valuta il gate con criteri e prove →</a></p>
+{% else %}<p class="muted">Nessun progetto da valutare: crea un progetto nella sezione «Portafoglio progetti».</p>{% endfor %}
+</section>
+<section class="card" style="margin-top:18px">
+<h2>3 · CAPA e apprendimento — non confondere esperimento fallito e non conformità</h2>
+<p><b>Obiettivo:</b> registra ciò che è accaduto e classifica correttamente il caso. Una prova tecnica fallita può essere un apprendimento legittimo: una non conformità richiede un requisito applicabile non rispettato.</p>
+<form method="post" action="{{ url_for('innovation_lab.nuova_azione') }}" class="form-grid">
+<input type="hidden" name="_csrf" value="{{ token }}">
+<label class="span2">Tipo di registrazione<select name="kind">{% for key,label in kinds.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+<label class="span2">Origine / requisito / documento<input name="source" required minlength="8" maxlength="150" placeholder="Audit simulato #3, requisito verificato ..."></label>
+<label class="span2">Fatto rilevato<textarea name="issue" required minlength="8" maxlength="1500" placeholder="Descrivi il fatto, non una soluzione anticipata"></textarea></label>
+<label class="span2">Causa / ipotesi di causa<textarea name="cause" required minlength="8" maxlength="1000" placeholder="Distingui causa radice da sintomo"></textarea></label>
+<label class="span2">Azione da svolgere e prova attesa<textarea name="action" required minlength="8" maxlength="1000" placeholder="Quale cambiamento è richiesto e come misurarne l'efficacia?"></textarea></label>
+<label>Responsabile<input name="owner" required minlength="8" maxlength="120"></label>
+<label>Scadenza<input type="date" name="due_date" required></label>
+<button class="btn primary span2">Salva l'azione e il suo responsabile</button>
+</form>
+{% if azioni %}
+<h3>Registro CAPA / apprendimento</h3>
+{% for a in azioni %}
+<div style="border-top:1px solid #d4e3ee;padding:14px 0">
+<b>#{{ a.id }} · {{ kinds.get(a.kind, a.kind) }}</b> — {{ a.status }} · {{ a.owner }} · scadenza {{ a.due_date.strftime('%d/%m/%Y') }}
+<p><strong>Fatto:</strong> {{ a.issue }}<br><strong>Causa:</strong> {{ a.cause }}<br><strong>Azione:</strong> {{ a.action }}<br><strong>Origine:</strong> {{ a.source }}</p>
+{% if a.status=='aperta' %}
+<form method="post" action="{{ url_for('innovation_lab.chiudi_azione', action_id=a.id) }}" class="form-grid">
+<input type="hidden" name="_csrf" value="{{ token }}">
+<label class="span2">Prova di efficacia prima della chiusura<textarea name="effectiveness" rows="2" required minlength="20" maxlength="1500" placeholder="Quale test, confronto o dato dimostra che l'azione ha funzionato?"></textarea></label>
+<button class="btn span2">Conferma verifica di efficacia e chiudi</button></form>
+{% else %}<p><b>Efficacia verificata:</b> {{ a.effectiveness }}</p>{% endif %}
+</div>{% endfor %}{% endif %}
+</section>
+<section class="card" style="margin-top:18px">
+<h2>4 · Riepilogo della decision intelligence</h2>
+<p>I punteggi sono indicatori didattici: non rappresentano probabilità di successo e non possono sostituire la decisione del responsabile. Le soglie inderogabili vengono segnalate separatamente.</p>
+{% for g in recensioni %}
+<p><b>{{ g.project_id }} · Gate fase {{ g.stage }}</b> — punteggio {{ (g.score*100)|round(0)|int }}%, copertura delle evidenze {{ (g.evidence_coverage*100)|round(0)|int }}% · <strong>{{ g.recommendation }}</strong> · {{ g.created_at.strftime('%d/%m/%Y') }}</p>
+{% else %}<p class="muted">Non sono ancora state salvate analisi Gate.</p>{% endfor %}
+</section>
+{% endblock %}
