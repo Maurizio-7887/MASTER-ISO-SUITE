@@ -97,3 +97,41 @@ def test_sistemi_14001_45001_sa8000(client):
     assert MgmtEvent.query.filter_by(description="Prova").one().status == "aperto"
     assert client.get("/sistemi/iso9999").status_code == 404
 
+
+
+def test_laboratorio_iso56001_evidenze_persistenti(client):
+    from app.models import InnovationComplianceReview
+    _login(client, "1234")
+    assert client.get("/innovazione/iso56001").status_code == 403
+    client.post("/auth/logout")
+    _login(client)
+    response = client.get("/innovazione/iso56001")
+    assert response.status_code == 200
+    assert b"Laboratorio ISO 56001" in response.data
+    from flask import session
+    with client.session_transaction() as sess:
+        token = sess["_iso56001_csrf"]
+    assert client.post("/innovazione/iso56001", data={
+        "_csrf": "sbagliato", "scope": "Ufficio innovazione e processi produttivi",
+    }).status_code == 400
+    assert InnovationComplianceReview.query.count() == 0
+    # Una spunta 'conforme' senza evidenza deve essere respinta.
+    r = client.post("/innovazione/iso56001", data={
+        "_csrf": token, "scope": "Ufficio innovazione e processi produttivi",
+        "judgement_4": "conforme", "ref_4": "4.1",
+        "evidence_4": "non basta", "reasoning_4": "non basta",
+    }, follow_redirects=True)
+    assert r.status_code == 200
+    assert InnovationComplianceReview.query.count() == 0
+    r = client.post("/innovazione/iso56001", data={
+        "_csrf": token, "scope": "Ufficio innovazione e processi produttivi",
+        "judgement_4": "conforme", "ref_4": "4.1",
+        "evidence_4": "Analisi contesto simulata 2026 rev. 2, data e responsabile",
+        "reasoning_4": "L'evidenza identifica perimetro e informazioni rilevanti valutate.",
+        "summary": "Prima valutazione svolta con evidenze documentali simulate.",
+    }, follow_redirects=True)
+    assert r.status_code == 200
+    entry = InnovationComplianceReview.query.one()
+    assert entry.results["4"]["judgement"] == "conforme"
+    assert entry.results["5"]["judgement"] == "da_verificare"
+    assert b"Rapporto didattico" in r.data
